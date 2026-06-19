@@ -2,17 +2,21 @@
 
 namespace RestApiFurb.Dominio.Interfaces;
 
-public interface IRepositorioBase<T> where T : ModeloBase
+public interface IRepositorioBase
 {
-    IQueryable<T> MontarConsulta();
+    IQueryable<T> MontarConsulta<T>() where T : ModeloBase;
 
-    Task<T> ObterPorIdAsync(Guid id);
+    Task<T> ObterPorIdAsync<T>(Guid id) where T : ModeloBase;
 
-    Task SalvarAsync(T modelo, CancellationToken cancellationToken);
+    Task AdicionarAsync<T>(T modelo, CancellationToken cancellationToken) where T : ModeloBase;
 
-    Task SalvarAsync(IList<T> modelos, CancellationToken cancellationToken);
+    Task AdicionarAsync<T>(IList<T> modelos, CancellationToken cancellationToken) where T : ModeloBase;
 
-    Task AtualizarAsync(T modelo, CancellationToken cancellationToken);
+    Task AtualizarAsync<T>(T modelo, CancellationToken cancellationToken) where T : ModeloBase;
 
-    Task DeletarAsync(Guid id, CancellationToken cancellationToken);
+    Task AtualizarAsync<T>(IList<T> modelos, CancellationToken cancellationToken) where T : ModeloBase;
+
+    Task DeletarAsync<T>(Guid id, CancellationToken cancellationToken) where T : ModeloBase;
+
+    Task ExecutarOperacoesEmTransacaoAsync(Func<IRepositorioBase, Task> acao, CancellationToken cancellationToken);
 }

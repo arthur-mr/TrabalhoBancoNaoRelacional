@@ -22,6 +22,7 @@ public class Produto : ModeloComExclusao
         string categoria,
         int quantidadeEstoque)
     {
+        Id = Guid.NewGuid();
         Nome = nome;
         Preco = preco;
         Codigo = codigo;

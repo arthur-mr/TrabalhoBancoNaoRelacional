@@ -3,91 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema ERP</title>
+    <title>Sistema ERP - Elasticsearch</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        /* TEMA ALTO CONTRASTE (Fundo Preto, Cards Brancos) */
-        body { 
-            background-color: #000000; 
-            color: #ffffff; 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            -webkit-font-smoothing: antialiased;
-        }
-
-        /* Navbar Customizada */
-        .navbar-custom {
-            background-color: #000000;
-            border-bottom: 1px solid #333333;
-            padding: 1rem 0;
-        }
-        .nav-link-custom {
-            color: #aaaaaa;
-            font-weight: 500;
-            cursor: pointer;
-            padding: 0.5rem 1rem;
-            transition: color 0.2s;
-        }
-        .nav-link-custom:hover, .nav-link-custom.active {
-            color: #ffffff;
-        }
-
-        .card { 
-            background-color: #ffffff; 
-            color: #000000; 
-            border: none; 
-            border-radius: 8px; 
-            box-shadow: 0 8px 24px rgba(255, 255, 255, 0.05);
-        }
-
-        .card-header { 
-            background-color: transparent; 
-            color: #000000; 
-            border-bottom: 1px solid #eeeeee; 
-            font-weight: 600; 
-            font-size: 0.95rem; 
-            padding: 1rem 1.5rem;
-        }
-
-        .form-floating > .form-control, .form-select-custom {
-            background-color: #ffffff;
-            color: #000000;
-            border: 1px solid #cccccc;
-            border-radius: 6px;
-            transition: all 0.2s ease;
-        }
-        
-        .form-floating > .form-control:focus, .form-select-custom:focus {
-            border-color: #000000;
-            box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1);
-            outline: none;
-        }
-
+        body { background-color: #000000; color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; }
+        .navbar-custom { background-color: #000000; border-bottom: 1px solid #333333; padding: 1rem 0; }
+        .nav-link-custom { color: #aaaaaa; font-weight: 500; cursor: pointer; padding: 0.5rem 1rem; transition: color 0.2s; }
+        .nav-link-custom:hover, .nav-link-custom.active { color: #ffffff; }
+        .card { background-color: #ffffff; color: #000000; border: none; border-radius: 8px; box-shadow: 0 8px 24px rgba(255, 255, 255, 0.05); }
+        .card-header { background-color: transparent; color: #000000; border-bottom: 1px solid #eeeeee; font-weight: 600; font-size: 0.95rem; padding: 1rem 1.5rem; }
+        .form-floating > .form-control, .form-select-custom { background-color: #ffffff; color: #000000; border: 1px solid #cccccc; border-radius: 6px; transition: all 0.2s ease; }
+        .form-floating > .form-control:focus, .form-select-custom:focus { border-color: #000000; box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1); outline: none; }
         .form-floating > label { color: #777777; }
-        .form-floating > .form-control:focus ~ label,
-        .form-floating > .form-control:not(:placeholder-shown) ~ label {
-            color: #000000;
-            transform: scale(0.85) translateY(-0.5rem) translateX(0.15rem);
-            font-weight: 500;
-        }
-
-        .btn-custom { 
-            background-color: #000000; color: #ffffff; border-radius: 6px; font-weight: 500; padding: 0.6rem 1.2rem; border: none; transition: all 0.2s ease;
-        }
+        .form-floating > .form-control:focus ~ label, .form-floating > .form-control:not(:placeholder-shown) ~ label { color: #000000; transform: scale(0.85) translateY(-0.5rem) translateX(0.15rem); font-weight: 500; }
+        .btn-custom { background-color: #000000; color: #ffffff; border-radius: 6px; font-weight: 500; padding: 0.6rem 1.2rem; border: none; transition: all 0.2s ease; }
         .btn-custom:hover:not(:disabled) { background-color: #333333; color: #ffffff; transform: translateY(-1px); }
         .btn-custom:disabled { background-color: #dddddd; color: #999999; cursor: not-allowed; }
-
         .btn-outline-custom { background-color: transparent; color: #ffffff; border: 1px solid #ffffff; border-radius: 6px; font-size: 0.85rem; }
         .btn-outline-custom:hover { background-color: #ffffff; color: #000000; }
-        
-        .btn-outline-dark-custom { background-color: transparent; color: #000000; border: 1px solid #000000; border-radius: 6px; font-size: 0.85rem; }
-        .btn-outline-dark-custom:hover { background-color: #000000; color: #ffffff; }
-
-        /* Tabela Customizada */
         .table-custom { color: #000000; vertical-align: middle; }
         .table-custom th { color: #777777; font-weight: 500; font-size: 0.85rem; text-transform: uppercase; border-bottom: 2px solid #eeeeee; }
         .table-custom td { border-bottom: 1px solid #eeeeee; padding: 1rem 0.5rem; }
-
-        /* Toasts */
         #toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 1055; }
         .toast-custom { background-color: #ffffff; border: none; color: #000000; border-radius: 8px; margin-top: 10px; box-shadow: 0 4px 12px rgba(255,255,255,0.15); }
         .toast-custom .btn-close { filter: invert(1); }
@@ -100,6 +36,7 @@
         <div class="d-flex align-items-center gap-4">
             <h5 class="m-0 fw-bold text-white me-4" style="letter-spacing: -1px;">ERP</h5>
             <span class="nav-link-custom active" id="nav-cadastros" onclick="mudarTela('painel')">Cadastros</span>
+            <span class="nav-link-custom" id="nav-clientes" onclick="mudarTela('clientes')">Clientes</span>
             <span class="nav-link-custom" id="nav-comandas" onclick="mudarTela('comandas')">Comandas</span>
         </div>
         <button class="btn btn-outline-custom btn-sm" onclick="fazerLogout()">Sair</button>
@@ -126,6 +63,7 @@
                     <span id="btn-login-text">Entrar</span>
                     <div id="btn-login-spinner" class="spinner-border spinner-border-sm ms-2 d-none"></div>
                 </button>
+                <div id="status-login" class="mt-3 text-center small text-muted d-none">Verificando credenciais e criando índices...</div>
             </form>
         </div>
     </div>
@@ -153,19 +91,60 @@
             </form>
         </div>
     </div>
+</div>
+
+<div id="tela-clientes" class="container mt-5 d-none pb-5 view-section">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="fw-bold m-0 text-white" style="letter-spacing: -1px;">Gestão de Clientes</h3>
+    </div>
     <div class="card mb-4">
-        <div class="card-header">Novo Usuário</div>
+        <div class="card-header">Novo Cliente</div>
         <div class="card-body p-4">
-            <form id="form-usuario" onsubmit="event.preventDefault(); criarUsuario();">
+            <form id="form-cliente" onsubmit="event.preventDefault(); criarCliente();">
                 <div class="row g-3">
-                    <div class="col-md-4"><div class="form-floating"><input type="text" class="form-control" id="user-nome" placeholder="Nome" required><label>Nome Completo</label></div></div>
-                    <div class="col-md-4"><div class="form-floating"><input type="email" class="form-control" id="user-email" placeholder="Email" required><label>E-mail</label></div></div>
-                    <div class="col-md-4"><div class="form-floating"><input type="text" class="form-control" id="user-telefone" placeholder="Telefone" required><label>Telefone</label></div></div>
+                    <div class="col-md-5">
+                        <div class="form-floating">
+                            <input type="text" class="form-control" id="cli-nome" placeholder="Nome Completo" required>
+                            <label>Nome Completo</label>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-floating">
+                            <input type="email" class="form-control" id="cli-email" placeholder="email@gmail.com" pattern="^[a-zA-Z0-9._%+-]+@gmail\.com$" title="Deve ser um endereço @gmail.com" required>
+                            <label>E-mail (@gmail.com)</label>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-floating">
+                            <input type="text" class="form-control" id="cli-telefone" placeholder="Ex: 47999999999" pattern="^\d{11}$" title="Deve conter exatamente 11 números, sem traços ou parênteses." required>
+                            <label>Telefone (11 dígitos)</label>
+                        </div>
+                    </div>
                     <div class="col-12 mt-4 text-end">
-                        <button type="submit" id="btn-usuario" class="btn btn-custom px-4"><span id="btn-usuario-text">Criar Usuário</span><div id="btn-usuario-spinner" class="spinner-border spinner-border-sm ms-2 d-none"></div></button>
+                        <button type="submit" id="btn-cliente" class="btn btn-custom px-4">
+                            <span id="btn-cliente-text">Salvar Cliente</span>
+                            <div id="btn-cliente-spinner" class="spinner-border spinner-border-sm ms-2 d-none"></div>
+                        </button>
                     </div>
                 </div>
             </form>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-body p-4">
+            <div class="table-responsive">
+                <table class="table table-hover table-custom" id="tabela-clientes">
+                    <thead>
+                        <tr><th>Nome</th><th>E-mail</th><th>Telefone</th><th class="text-center">Ações</th></tr>
+                    </thead>
+                    <tbody id="tbody-clientes"><tr><td colspan="4" class="text-center py-4 text-muted">Carregando clientes...</td></tr></tbody>
+                </table>
+                <div class="d-flex justify-content-between align-items-center mt-3">
+                    <button class="btn btn-outline-dark btn-sm" id="btn-prev" onclick="mudarPagina(-1)" disabled>Anterior</button>
+                    <span id="label-pagina" class="small text-dark">Página 1</span>
+                    <button class="btn btn-outline-dark btn-sm" id="btn-next" onclick="mudarPagina(1)">Próximo</button>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -180,18 +159,8 @@
         <div class="card-body p-4">
             <div class="table-responsive">
                 <table class="table table-hover table-custom" id="tabela-comandas">
-                    <thead>
-                        <tr>
-                            <th>ID / Identificação</th>
-                            <th>Data</th>
-                            <th>Status</th>
-                            <th class="text-end">Valor Total</th>
-                            <th class="text-center">Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tbody-comandas">
-                        <tr><td colspan="5" class="text-center py-4 text-muted">Carregando comandas...</td></tr>
-                    </tbody>
+                    <thead><tr><th>ID</th><th>Data</th><th>Status</th><th class="text-end">Total</th><th class="text-center">Ações</th></tr></thead>
+                    <tbody id="tbody-comandas"><tr><td colspan="5" class="text-center py-4 text-muted">Carregando comandas...</td></tr></tbody>
                 </table>
             </div>
         </div>
@@ -203,10 +172,9 @@
         <div class="modal-content" style="border-radius: 8px; border: none; background-color: #ffffff;">
             <div class="modal-header border-bottom">
                 <h5 class="modal-title fw-bold text-dark">Abertura de Comanda</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body p-4">
-                
                 <div class="row g-3 mb-4">
                     <div class="col-md-12">
                         <div class="form-floating">
@@ -218,17 +186,16 @@
 
                 <div class="p-3 mb-4" style="background-color: #f8f9fa; border-radius: 6px; border: 1px solid #eeeeee;">
                     <h6 class="fw-bold mb-3 text-dark">Adicionar Produtos</h6>
-                    <div class="row g-2 align-items-center">
-                        <div class="col-md-7">
-                            <select id="comanda-produto-select" class="form-select form-select-custom p-3">
-                                <option value="" disabled selected>Carregando produtos...</option>
-                            </select>
+                    <div class="row g-2 align-items-start">
+                        <div class="col-md-7 position-relative">
+                            <input type="text" id="comanda-produto-busca" class="form-control p-3" placeholder="Digite para buscar produto (Autocomplete)..." autocomplete="off">
+                            <ul id="lista-autocomplete" class="list-group position-absolute w-100 d-none" style="z-index: 1056; max-height: 250px; overflow-y: auto; box-shadow: 0 8px 16px rgba(0,0,0,0.15); border-radius: 6px;"></ul>
                         </div>
                         <div class="col-md-3">
                             <input type="number" id="comanda-produto-qtd" class="form-control p-3" placeholder="Qtd" value="1" min="1">
                         </div>
                         <div class="col-md-2">
-                            <button class="btn btn-outline-dark-custom w-100 p-3" onclick="adicionarItemNaComanda()">Add</button>
+                            <button class="btn btn-custom w-100 p-3" onclick="adicionarItemNaComanda()">Add</button>
                         </div>
                     </div>
                 </div>
@@ -236,17 +203,12 @@
                 <h6 class="fw-bold text-dark">Itens da Comanda</h6>
                 <table class="table table-sm table-custom mt-2">
                     <thead><tr><th>Produto</th><th>Qtd</th><th class="text-end">Ação</th></tr></thead>
-                    <tbody id="tbody-itens-comanda">
-                        <tr><td colspan="3" class="text-center text-muted small py-3">Nenhum item adicionado</td></tr>
-                    </tbody>
+                    <tbody id="tbody-itens-comanda"><tr><td colspan="3" class="text-center text-muted small py-3">Nenhum item adicionado</td></tr></tbody>
                 </table>
             </div>
             <div class="modal-footer border-top bg-light">
-                <button type="button" class="btn btn-outline-dark-custom" data-bs-dismiss="modal">Cancelar</button>
-                <button type="button" class="btn btn-custom" id="btn-salvar-comanda" onclick="salvarComanda()">
-                    <span id="btn-salvar-comanda-text">Finalizar Comanda</span>
-                    <div id="btn-salvar-comanda-spinner" class="spinner-border spinner-border-sm ms-2 d-none"></div>
-                </button>
+                <button type="button" class="btn btn-outline-dark" data-bs-dismiss="modal" style="border: 1px solid #000; color: #000; border-radius: 6px;">Cancelar</button>
+                <button type="button" class="btn btn-custom" id="btn-salvar-comanda" onclick="salvarComanda()">Finalizar</button>
             </div>
         </div>
     </div>
@@ -258,30 +220,57 @@
 <script>
     const API_BASE_URL = 'https://localhost:5001'; 
     let modalComandaInstance;
-    let itensComandaTemporaria = []; // Guarda os itens adicionados antes de salvar
-    let produtosDisponiveis = []; // Cache do GET /api/Produto
+    let itensComandaTemporaria = [];
+    let timeoutBusca = null;
+    let produtoSelecionado = null; 
 
     window.onload = function() {
         modalComandaInstance = new bootstrap.Modal(document.getElementById('modalNovaComanda'));
         if (localStorage.getItem('jwtToken')) {
             iniciarSessao();
         }
+        
+        document.getElementById('comanda-produto-busca').addEventListener('input', function() {
+            clearTimeout(timeoutBusca);
+            const termo = this.value.trim();
+
+            if (termo.length < 2) {
+                document.getElementById('lista-autocomplete').classList.add('d-none');
+                return;
+            }
+
+            timeoutBusca = setTimeout(() => buscarNoElasticsearch(termo), 300);
+        });
     };
 
     function mostrarNotificacao(mensagem, tipo = 'success') {
         const container = document.getElementById('toast-container');
         const icon = tipo === 'success' ? '✅' : '❌';
-        const color = tipo === 'success' ? '#000000' : '#dc3545';
         const toastHtml = `<div class="toast toast-custom align-items-center border-0 show"><div class="d-flex"><div class="toast-body d-flex align-items-center gap-2 fw-medium"><span>${icon}</span><span>${mensagem}</span></div><button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast"></button></div></div>`;
         const el = document.createElement('div'); el.innerHTML = toastHtml; container.appendChild(el.firstElementChild);
         setTimeout(() => { if (container.firstChild) container.removeChild(container.firstChild); }, 4000);
+    }
+
+    function setBotoesCarregando(idBotao, estaCarregando) {
+        const btn = document.getElementById(idBotao);
+        const text = document.getElementById(`${idBotao}-text`);
+        const spinner = document.getElementById(`${idBotao}-spinner`);
+
+        if (estaCarregando) {
+            btn.disabled = true;
+            spinner.classList.remove('d-none');
+            text.style.opacity = '0.5';
+        } else {
+            btn.disabled = false;
+            spinner.classList.add('d-none');
+            text.style.opacity = '1';
+        }
     }
 
     function getAuthHeaders() {
         return { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('jwtToken')}` };
     }
 
-    // --- ROTEAMENTO SPA ---
     function iniciarSessao() {
         document.getElementById('tela-login').classList.add('d-none');
         document.getElementById('nav-superior').classList.remove('d-none');
@@ -299,31 +288,224 @@
     function mudarTela(telaAlvo) {
         document.querySelectorAll('.view-section').forEach(el => el.classList.add('d-none'));
         document.getElementById(`tela-${telaAlvo}`).classList.remove('d-none');
-        
         document.getElementById('nav-cadastros').classList.remove('active');
+        document.getElementById('nav-clientes').classList.remove('active');
         document.getElementById('nav-comandas').classList.remove('active');
         document.getElementById(`nav-${telaAlvo}`).classList.add('active');
 
-        if (telaAlvo === 'comandas') {
-            carregarComandas();
+        if (telaAlvo === 'comandas') carregarComandas();
+        if (telaAlvo === 'clientes') carregarClientes();
+    }
+
+    // --- LOGIN ---
+    async function fazerLogin() {
+        const u = document.getElementById('login-usuario').value; 
+        const s = document.getElementById('login-senha').value;
+        const statusText = document.getElementById('status-login');
+        
+        setBotoesCarregando('btn-login', true);
+        statusText.classList.remove('d-none');
+
+        const form = new FormData(); 
+        form.append('usuario', u); 
+        form.append('senha', s);
+        
+        try {
+            const res = await fetch(`${API_BASE_URL}/api/Token`, { method: 'POST', body: form });
+            if (res.ok) { 
+                const data = await res.json();
+                localStorage.setItem('jwtToken', data.access_token); 
+                
+                statusText.innerText = "Preparando índices do Elasticsearch...";
+
+                try {
+                    await fetch(`${API_BASE_URL}/api/Produto/CriarIndicesProduto`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${data.access_token}`
+                        },
+                        body: JSON.stringify({})
+                    });
+                } catch (e) { console.error("Erro silencioso ao criar índices", e); }
+
+                iniciarSessao(); 
+            }
+            else if (res.status === 401) { mostrarNotificacao('Usuário ou senha incorretos.', 'error'); }
+        } catch (e) { 
+            mostrarNotificacao('Erro de conexão.', 'error'); 
+        } finally {
+            setBotoesCarregando('btn-login', false);
+            statusText.classList.add('d-none');
+            statusText.innerText = "Verificando credenciais e criando índices...";
         }
     }
 
-    // --- AUTENTICAÇÃO E CADASTROS (Mantidos como estavam) ---
-    async function fazerLogin() {
-        const u = document.getElementById('login-usuario').value; const s = document.getElementById('login-senha').value;
-        const form = new FormData(); form.append('usuario', u); form.append('senha', s);
+    // --- PRODUTOS ---
+    async function criarProduto() {
+        setBotoesCarregando('btn-produto', true);
+        const payload = {
+            Nome: document.getElementById('prod-nome').value,
+            Codigo: document.getElementById('prod-codigo').value,
+            CodigoBarras: document.getElementById('prod-barras').value,
+            Categoria: document.getElementById('prod-categoria').value,
+            Preco: parseFloat(document.getElementById('prod-preco').value) || 0,
+            QuantidadeEstoque: parseInt(document.getElementById('prod-estoque').value) || 0
+        };
+
         try {
-            const res = await fetch(`${API_BASE_URL}/api/Token`, { method: 'POST', body: form });
-            if (res.ok) { localStorage.setItem('jwtToken', (await res.json()).access_token); iniciarSessao(); }
-            else if (res.status === 401) { mostrarNotificacao('Usuário ou senha incorretos.', 'error'); }
-        } catch (e) { mostrarNotificacao('Erro de conexão.', 'error'); }
+            const response = await fetch(`${API_BASE_URL}/api/Produto/CriarProduto`, {
+                method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(payload)
+            });
+
+            if (response.ok) {
+                mostrarNotificacao('Produto salvo com sucesso!');
+                document.getElementById('form-produto').reset();
+            } else {
+                const erro = await response.text();
+                mostrarNotificacao(erro || 'Erro ao salvar.', 'error');
+            }
+        } catch (error) { mostrarNotificacao('Erro de conexão.', 'error'); } 
+        finally { setBotoesCarregando('btn-produto', false); }
     }
 
-    // [Funções criarProduto() e criarUsuario() foram omitidas do escopo visual do JS para focar nas Comandas, mas você deve manter as originais que te enviei antes aqui!]
+    // --- CLIENTES ---
+    async function criarCliente() {
+        setBotoesCarregando('btn-cliente', true);
+        
+        const payload = {
+            Nome: document.getElementById('cli-nome').value,
+            Email: document.getElementById('cli-email').value,
+            Telefone: document.getElementById('cli-telefone').value
+        };
 
-    // --- GESTÃO DE COMANDAS ---
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/Usuario`, {
+                method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(payload)
+            });
 
+            if (response.ok) {
+                mostrarNotificacao('Cliente salvo com sucesso!');
+                document.getElementById('form-cliente').reset();
+                carregarClientes(); 
+            } else {
+                const erro = await response.text();
+                mostrarNotificacao(erro || 'Erro ao salvar cliente.', 'error');
+            }
+        } catch (error) { mostrarNotificacao('Erro de conexão.', 'error'); } 
+        finally { setBotoesCarregando('btn-cliente', false); }
+    }
+
+let paginaAtual = 0; // offset começa em 0
+
+    async function carregarClientes() {
+        const tbody = document.getElementById('tbody-clientes');
+        const labelPagina = document.getElementById('label-pagina');
+        
+        try {
+            // Chamada com offset calculado (pagina 0 = offset 0, pagina 1 = offset 10...)
+            const res = await fetch(`${API_BASE_URL}/api/Usuario?offset=${paginaAtual * 10}`, { 
+                headers: getAuthHeaders() 
+            });
+            
+            if (!res.ok) throw new Error();
+            
+            const clientes = await res.json();
+            
+            tbody.innerHTML = '';
+            if (clientes.length === 0 && paginaAtual > 0) {
+                mudarPagina(-1); // Volta se estiver vazio
+                return;
+            }
+
+            if (clientes.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-muted">Nenhum cliente encontrado.</td></tr>`;
+                return;
+            }
+
+            clientes.forEach(c => {
+                tbody.innerHTML += `
+                <tr>
+                    <td class="fw-medium">${c.nome}</td>
+                    <td>${c.email}</td>
+                    <td>${c.telefone}</td>
+                    <td class="text-center">
+                        <button class="btn btn-sm btn-outline-danger" onclick="alert('Implementar exclusão')">Excluir</button>
+                    </td>
+                </tr>`;
+            });
+
+            // Atualiza botões
+            labelPagina.innerText = `Página ${paginaAtual + 1}`;
+            document.getElementById('btn-prev').disabled = paginaAtual === 0;
+            document.getElementById('btn-next').disabled = clientes.length < 10;
+        } catch (e) {
+            tbody.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-danger">Erro ao carregar clientes.</td></tr>`;
+        }
+    }
+
+    function mudarPagina(direcao) {
+        paginaAtual += direcao;
+        carregarClientes();
+    }
+
+    // --- AUTOCOMPLETE ELASTICSEARCH ---
+    async function buscarNoElasticsearch(termo) {
+        try {
+            const res = await fetch(`${API_BASE_URL}/api/Produto/Autocomplete?termo=${termo}`, { headers: getAuthHeaders() });
+            if (res.ok) {
+                const produtos = await res.json();
+                renderizarListaAutocomplete(produtos);
+            }
+        } catch (error) { console.error("Erro na busca", error); }
+    }
+
+    function renderizarListaAutocomplete(produtos) {
+        const listaResultados = document.getElementById('lista-autocomplete');
+        listaResultados.innerHTML = '';
+        
+        if (produtos.length === 0) {
+            listaResultados.innerHTML = `<li class="list-group-item text-muted small border-0 py-3 text-center">Nenhum produto encontrado</li>`;
+            listaResultados.classList.remove('d-none');
+            return;
+        }
+
+        produtos.forEach(p => {
+            const li = document.createElement('li');
+            li.className = 'list-group-item list-group-item-action d-flex justify-content-between align-items-center border-bottom';
+            li.style.cursor = 'pointer';
+            li.innerHTML = `<span class="fw-medium">${p.nome}</span>`;
+            
+            li.onclick = async () => {
+                const inputBusca = document.getElementById('comanda-produto-busca');
+                listaResultados.classList.add('d-none'); 
+                inputBusca.disabled = true;
+                inputBusca.value = 'Buscando detalhes do produto...'; 
+
+                try {
+                    const res = await fetch(`${API_BASE_URL}/api/Produto/ObterPorId/${p.id}`, { headers: getAuthHeaders() });
+                    if (res.ok) {
+                        produtoSelecionado = await res.json();
+                        inputBusca.value = produtoSelecionado.nome; 
+                    } else {
+                        mostrarNotificacao('Erro ao obter detalhes do produto.', 'error');
+                        produtoSelecionado = null;
+                        inputBusca.value = '';
+                    }
+                } catch (e) {
+                    mostrarNotificacao('Erro de conexão ao buscar produto.', 'error');
+                    produtoSelecionado = null;
+                    inputBusca.value = '';
+                } finally { inputBusca.disabled = false; }
+            };
+
+            listaResultados.appendChild(li);
+        });
+
+        listaResultados.classList.remove('d-none');
+    }
+
+    // --- COMANDAS ---
     async function carregarComandas() {
         const tbody = document.getElementById('tbody-comandas');
         try {
@@ -338,59 +520,33 @@
             }
 
             comandas.forEach(c => {
-                // Ajuste os nomes das propriedades abaixo de acordo com a ViewModel que sua API devolve
                 const idFormatado = c.id ? c.id.substring(0,8) : 'N/A';
-                tbody.innerHTML += `
-                    <tr>
-                        <td class="fw-bold">${idFormatado}</td>
-                        <td>${new Date().toLocaleDateString()}</td>
-                        <td><span class="badge bg-dark">Aberta</span></td>
-                        <td class="text-end fw-bold">R$ 0,00</td>
-                        <td class="text-center"><button class="btn btn-sm btn-outline-danger" onclick="deletarComanda('${c.id}')">Excluir</button></td>
-                    </tr>
-                `;
+                tbody.innerHTML += `<tr><td class="fw-bold">${idFormatado}</td><td>${new Date().toLocaleDateString()}</td><td><span class="badge bg-dark">Aberta</span></td><td class="text-end fw-bold">R$ 0,00</td><td class="text-center"><button class="btn btn-sm btn-outline-danger" onclick="deletarComanda('${c.id}')">Excluir</button></td></tr>`;
             });
-        } catch (e) {
-            tbody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-danger">Erro ao carregar comandas.</td></tr>`;
-        }
+        } catch (e) { tbody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-danger">Erro ao carregar comandas.</td></tr>`; }
     }
 
-    async function abrirModalComanda() {
+    function abrirModalComanda() {
         itensComandaTemporaria = [];
+        produtoSelecionado = null;
         document.getElementById('comanda-identificacao').value = '';
+        document.getElementById('comanda-produto-busca').value = '';
+        document.getElementById('lista-autocomplete').classList.add('d-none');
         renderizarTabelaItens();
         modalComandaInstance.show();
-
-        // Busca produtos para o Select (ATENÇÃO: Requer GET /api/Produto no seu Backend)
-        const select = document.getElementById('comanda-produto-select');
-        try {
-            const res = await fetch(`${API_BASE_URL}/api/Produto`, { headers: getAuthHeaders() });
-            if (res.ok) {
-                produtosDisponiveis = await res.json();
-                select.innerHTML = '<option value="" disabled selected>Selecione um produto...</option>';
-                produtosDisponiveis.forEach(p => {
-                    select.innerHTML += `<option value="${p.id}" data-nome="${p.nome}">${p.nome} - R$ ${p.preco}</option>`;
-                });
-            }
-        } catch (e) {
-            select.innerHTML = '<option value="" disabled>Erro ao carregar produtos</option>';
-        }
     }
 
     function adicionarItemNaComanda() {
-        const select = document.getElementById('comanda-produto-select');
         const qtdInput = document.getElementById('comanda-produto-qtd');
+        const buscaInput = document.getElementById('comanda-produto-busca');
         
-        if (!select.value) return mostrarNotificacao('Selecione um produto!', 'error');
+        if (!produtoSelecionado) return mostrarNotificacao('Pesquise e selecione um produto na lista!', 'error');
         
-        const produtoId = select.value;
-        const nomeProduto = select.options[select.selectedIndex].getAttribute('data-nome');
         const quantidade = parseInt(qtdInput.value) || 1;
-
-        itensComandaTemporaria.push({ produtoId, nomeProduto, quantidade });
+        itensComandaTemporaria.push({ produtoId: produtoSelecionado.id, nomeProduto: produtoSelecionado.nome, quantidade: quantidade });
         
-        // Limpa inputs
-        select.value = '';
+        produtoSelecionado = null;
+        buscaInput.value = '';
         qtdInput.value = '1';
         renderizarTabelaItens();
     }
@@ -405,13 +561,7 @@
         }
 
         itensComandaTemporaria.forEach((item, index) => {
-            tbody.innerHTML += `
-                <tr>
-                    <td>${item.nomeProduto}</td>
-                    <td>${item.quantidade}x</td>
-                    <td class="text-end"><button class="btn btn-sm text-danger border-0 p-0" onclick="removerItemComanda(${index})">Remover</button></td>
-                </tr>
-            `;
+            tbody.innerHTML += `<tr><td>${item.nomeProduto}</td><td>${item.quantidade}x</td><td class="text-end"><button class="btn btn-sm text-danger border-0 p-0" onclick="removerItemComanda(${index})">Remover</button></td></tr>`;
         });
     }
 
@@ -424,58 +574,21 @@
         const identificacao = document.getElementById('comanda-identificacao').value;
         if (!identificacao) return mostrarNotificacao('Informe a identificação (Mesa/Cliente).', 'error');
 
-        // MONTANDO O PAYLOAD PARA SUA API
-        // Ajuste os nomes das propriedades para dar "Match" perfeito com a sua CriarComandaViewModel no C#
-        const payload = {
-            Identificacao: identificacao,
-            Itens: itensComandaTemporaria.map(i => ({
-                ProdutoId: i.produtoId,
-                Quantidade: i.quantidade
-            }))
-        };
-
-        const btnSpinner = document.getElementById('btn-salvar-comanda-spinner');
-        btnSpinner.classList.remove('d-none');
+        const payload = { Identificacao: identificacao, Itens: itensComandaTemporaria.map(i => ({ ProdutoId: i.produtoId, Quantidade: i.quantidade })) };
 
         try {
-            const res = await fetch(`${API_BASE_URL}/api/Comanda`, {
-                method: 'POST',
-                headers: getAuthHeaders(),
-                body: JSON.stringify(payload)
-            });
-
-            if (res.ok) {
-                mostrarNotificacao('Comanda criada com sucesso!');
-                modalComandaInstance.hide();
-                carregarComandas(); // Recarrega a tabela
-            } else {
-                mostrarNotificacao('Erro ao criar comanda.', 'error');
-            }
-        } catch (e) {
-            mostrarNotificacao('Erro de conexão.', 'error');
-        } finally {
-            btnSpinner.classList.add('d-none');
-        }
+            const res = await fetch(`${API_BASE_URL}/api/Comanda`, { method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(payload) });
+            if (res.ok) { mostrarNotificacao('Comanda criada!'); modalComandaInstance.hide(); carregarComandas(); } 
+            else { mostrarNotificacao('Erro ao criar comanda.', 'error'); }
+        } catch (e) { mostrarNotificacao('Erro de conexão.', 'error'); } 
     }
 
     async function deletarComanda(id) {
-        if (!confirm('Deseja realmente excluir esta comanda?')) return;
-        
+        if (!confirm('Deseja excluir?')) return;
         try {
-            const res = await fetch(`${API_BASE_URL}/api/Comanda/${id}`, {
-                method: 'DELETE',
-                headers: getAuthHeaders()
-            });
-
-            if (res.ok) {
-                mostrarNotificacao('Comanda excluída!');
-                carregarComandas();
-            } else {
-                mostrarNotificacao('Erro ao excluir.', 'error');
-            }
-        } catch (e) {
-            mostrarNotificacao('Erro de conexão.', 'error');
-        }
+            const res = await fetch(`${API_BASE_URL}/api/Comanda/${id}`, { method: 'DELETE', headers: getAuthHeaders() });
+            if (res.ok) { mostrarNotificacao('Comanda excluída!'); carregarComandas(); } 
+        } catch (e) { mostrarNotificacao('Erro.', 'error'); }
     }
 </script>
 

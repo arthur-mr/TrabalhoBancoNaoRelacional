@@ -48,10 +48,8 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-
 builder.Services.AddScoped<IComandaConversor, ComandaConversor>();
-builder.Services.AdicionarInfraEstrutura(connectionString);
+builder.Services.AdicionarInfraEstrutura(builder.Configuration);
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>

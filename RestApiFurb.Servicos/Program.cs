@@ -13,6 +13,6 @@ await Host.CreateDefaultBuilder(args)
         services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(Program).Assembly));
         services.AddHostedService<ComandaCriadaConsumidor>();
         var connectionString = ctx.Configuration.GetConnectionString("DefaultConnection");
-        services.AdicionarInfraEstrutura(connectionString);
+        services.AdicionarInfraEstrutura(ctx.Configuration);
     })
     .RunConsoleAsync();

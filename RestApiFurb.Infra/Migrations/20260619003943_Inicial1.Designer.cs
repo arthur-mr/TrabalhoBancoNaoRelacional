@@ -12,7 +12,7 @@ using RestApiFurb.Infra.Contextos;
 namespace RestApiFurb.Infra.Migrations
 {
     [DbContext(typeof(Contexto))]
-    [Migration("20260614192429_Inicial1")]
+    [Migration("20260619003943_Inicial1")]
     partial class Inicial1
     {
         /// <inheritdoc />
@@ -57,6 +57,45 @@ namespace RestApiFurb.Infra.Migrations
                     b.HasIndex("UsuarioId");
 
                     b.ToTable("COMANDA", (string)null);
+                });
+
+            modelBuilder.Entity("RestApiFurb.Dominio.Modelos.OutboxMessage", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("ID");
+
+                    b.Property<DateTime>("DataCriacao")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("DATA_CRIACAO");
+
+                    b.Property<DateTime?>("DataProcessamento")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("DATA_PROCESSAMENTO");
+
+                    b.Property<string>("Erro")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("ERRO");
+
+                    b.Property<string>("Payload")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("PAYLOAD");
+
+                    b.Property<bool>("Processado")
+                        .HasColumnType("bit")
+                        .HasColumnName("PROCESSADO");
+
+                    b.Property<string>("TipoEvento")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)")
+                        .HasColumnName("TIPO_EVENTO");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("OUTBOX_MESSAGE", (string)null);
                 });
 
             modelBuilder.Entity("RestApiFurb.Dominio.Modelos.Produto", b =>

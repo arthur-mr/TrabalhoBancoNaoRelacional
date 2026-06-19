@@ -8,45 +8,41 @@ namespace RestApiFurb.Dominio.Servicos.Servicos;
 
 internal sealed class ComandaServico : IComandaServico
 {
-    private readonly IRepositorioBase<Comanda> repositorio;
-    private readonly IRepositorioBase<Produto> repositorioProduto;
-    private readonly IRepositorioBase<Usuario> repositorioUsuario;
-    private readonly IRepositorioBase<ProdutoComanda> repositorioProdutoComanda;
+    private readonly IRepositorioBase repositorio;
     private readonly IPublicadorMensagemServico mensageria;
 
     public ComandaServico(
-        IRepositorioBase<Comanda> repositorio,
-        IRepositorioBase<Produto> repositorioProduto,
-        IRepositorioBase<Usuario> repositorioUsuario,
-        IRepositorioBase<ProdutoComanda> repositorioProdutoComanda,
+        IRepositorioBase repositorio,
         IPublicadorMensagemServico mensageria)
     {
         this.repositorio = repositorio;
-        this.repositorioProduto = repositorioProduto;
-        this.repositorioUsuario = repositorioUsuario;
-        this.repositorioProdutoComanda = repositorioProdutoComanda;
         this.mensageria = mensageria;
     }
 
     public async Task<ComandaCriadaContrato> CriarComandaAsync(CriarComandaContrato contrato, CancellationToken cancellationToken)
     {
         var comandaId = Guid.NewGuid();
-        var usuario = await repositorioUsuario.ObterPorIdAsync(contrato.UsuarioId);
         var produtosComanda = new List<ProdutoComanda>();
         var produtosRetorno = new List<ListarProdutoContrato>();
 
-        if (usuario is null)
+        foreach (var item in contrato.Itens)
         {
-            throw new ArgumentException($"Usuário com ID {contrato.UsuarioId} não encontrado.");
-        }
+            var produto = await repositorio.ObterPorIdAsync<Produto>(item.ProdutoId)
+                ?? throw new ArgumentException($"Produto com ID {item.ProdutoId} não encontrado.");
 
-        foreach (var produtoId in contrato.ProdutosIds)
-        {
-            var produto = await repositorioProduto.ObterPorIdAsync(produtoId)
-                ?? throw new ArgumentException($"Produto com ID {produtoId} não encontrado.");
+            var produtoComanda = new ProdutoComanda(
+                comandaId: comandaId,
+                produtoId: produto.Id,
+                quantidade: item.Quantidade);
 
-            var produtoComanda = new ProdutoComanda(comandaId: comandaId, produtoId: produto.Id);
-            var produtoRetorno = new ListarProdutoContrato(produto.Id, produto.Nome, produto.Preco);
+            var produtoRetorno = new ListarProdutoContrato(
+                Id: produto.Id,
+                Nome: produto.Nome,
+                Preco: produto.Preco,
+                Codigo: produto.Codigo,
+                CodigoBarras: produto.CodigoBarras,
+                Categoria: produto.Categoria,
+                QuantidadeEstoque: produto.QuantidadeEstoque);
 
             produtosComanda.Add(produtoComanda);
             produtosRetorno.Add(produtoRetorno);
@@ -54,21 +50,20 @@ internal sealed class ComandaServico : IComandaServico
 
         var entidade = new Comanda(
             id: comandaId,
-            usuarioId: contrato.UsuarioId,
+            usuarioId: Guid.NewGuid(),
+            identificacao: contrato.Identificacao,
             produtoComandas: produtosComanda);
 
-        await repositorio.SalvarAsync(entidade, cancellationToken);
+        await repositorio.AdicionarAsync(entidade, cancellationToken);
 
         var retorno = new ComandaCriadaContrato(
             Id: entidade.Id,
-            UsuarioId: entidade.UsuarioId,
-            NomeUsuario: usuario.Nome,
-            TelefoneUsuario: usuario.Telefone,
+            UsuarioId: Guid.NewGuid(),
+            Identificacao: entidade.Identificacao,
             Produtos: produtosRetorno);
 
         var mensagem = new ComandaCriadaMensagem(
-            NomeUsuario: usuario.Nome,
-            EmailUsuario: usuario.Email,
+            Identificacao: entidade.Identificacao,
             Comanda: retorno);
 
         mensageria.Publicar(mensagem);
@@ -79,7 +74,7 @@ internal sealed class ComandaServico : IComandaServico
     public async Task<IList<ComandaCriadaContrato>> ObterTodasComandasAsync(CancellationToken cancellationToken)
     {
         var comandas = await repositorio
-            .MontarConsulta()
+            .MontarConsulta<Comanda>()
             .Where(x => x.Ativo)
             .Include(c => c.ProdutosComanda)
             .ThenInclude(pc => pc.Produto)
@@ -89,7 +84,14 @@ internal sealed class ComandaServico : IComandaServico
         var contratos = comandas.Select(c =>
         {
             var produtos = c.ProdutosComanda
-                .Select(pc => new ListarProdutoContrato(pc.Produto.Id, pc.Produto.Nome, pc.Produto.Preco))
+                .Select(pc => new ListarProdutoContrato(
+                    Id: pc.Produto.Id,
+                    Nome: pc.Produto.Nome,
+                    Preco: pc.Produto.Preco,
+                    Codigo: pc.Produto.Codigo,
+                    CodigoBarras: pc.Produto.CodigoBarras,
+                    Categoria: pc.Produto.Categoria,
+                    QuantidadeEstoque: pc.Produto.QuantidadeEstoque))
                 .ToList();
 
             return new ComandaCriadaContrato(
@@ -107,7 +109,7 @@ internal sealed class ComandaServico : IComandaServico
     public async Task<ComandaCriadaContrato> ObterComandaPorIdAsync(Guid id, CancellationToken cancellationToken)
     {
         var comanda = await repositorio
-            .MontarConsulta()
+            .MontarConsulta<Comanda>()
             .Where(x => x.Ativo)
             .Include(c => c.ProdutosComanda)
             .ThenInclude(pc => pc.Produto)
@@ -118,7 +120,14 @@ internal sealed class ComandaServico : IComandaServico
             return null;
 
         var produtos = comanda.ProdutosComanda
-            .Select(pc => new ListarProdutoContrato(pc.Produto.Id, pc.Produto.Nome, pc.Produto.Preco))
+            .Select(pc => new ListarProdutoContrato(
+                Id: pc.Produto.Id,
+                Nome: pc.Produto.Nome,
+                Preco: pc.Produto.Preco,
+                Codigo: pc.Produto.Codigo,
+                CodigoBarras: pc.Produto.CodigoBarras,
+                Categoria: pc.Produto.Categoria,
+                QuantidadeEstoque: pc.Produto.QuantidadeEstoque))
             .ToList();
 
         return new ComandaCriadaContrato(
@@ -132,7 +141,7 @@ internal sealed class ComandaServico : IComandaServico
     public async Task AtualizarComandaAsync(Guid id, AtualizarComandaContrato contrato, CancellationToken cancellationToken)
     {
         var comanda = await repositorio
-            .MontarConsulta()
+            .MontarConsulta<Comanda>()
             .Include(x => x.ProdutosComanda)
             .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
 
@@ -141,8 +150,8 @@ internal sealed class ComandaServico : IComandaServico
 
         if (contrato.UsuarioId.HasValue)
         {
-            var existe = await repositorioUsuario
-                .MontarConsulta()
+            var existe = await repositorio
+                .MontarConsulta<Usuario>()
                 .AnyAsync(u => u.Id == contrato.UsuarioId.Value, cancellationToken);
 
             if (!existe)
@@ -160,15 +169,15 @@ internal sealed class ComandaServico : IComandaServico
 
             comanda.ProdutosComanda.Remove(produtoParaRemover);
 
-            var produtoComanda = await repositorioProdutoComanda.MontarConsulta().FirstOrDefaultAsync(pc => pc.Id == produtoParaRemover.Id, cancellationToken);
+            var produtoComanda = await repositorio.MontarConsulta<ProdutoComanda>().FirstOrDefaultAsync(pc => pc.Id == produtoParaRemover.Id, cancellationToken);
 
-            await repositorioProdutoComanda.DeletarAsync(produtoComanda.Id, cancellationToken);
+            await repositorio.DeletarAsync<ProdutoComanda>(produtoComanda.Id, cancellationToken);
         }
 
         foreach (var produtoIdAdicionar in contrato.ProdutosParaAdicionar)
         {
-            var existe = await repositorioProduto
-                .MontarConsulta()
+            var existe = await repositorio
+                .MontarConsulta<Produto>()
                 .AnyAsync(p => p.Id == produtoIdAdicionar, cancellationToken);
 
             if (!existe)
@@ -182,6 +191,6 @@ internal sealed class ComandaServico : IComandaServico
 
     public async Task DeletarComandaAsync(Guid id, CancellationToken cancellationToken)
     {
-        await repositorio.DeletarAsync(id, cancellationToken);
+        await repositorio.DeletarAsync<Comanda>(id, cancellationToken);
     }
 }

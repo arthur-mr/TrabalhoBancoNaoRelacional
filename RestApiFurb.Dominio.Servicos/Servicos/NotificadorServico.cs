@@ -8,9 +8,9 @@ namespace RestApiFurb.Dominio.Servicos.Servicos;
 
 internal sealed class NotificadorServico : INotificadorServico
 {
-    private readonly IRepositorioBase<Usuario> repositorioBase;
+    private readonly IRepositorioBase repositorioBase;
 
-    public NotificadorServico(IRepositorioBase<Usuario> repositorioBase)
+    public NotificadorServico(IRepositorioBase repositorioBase)
     {
         this.repositorioBase = repositorioBase;
     }

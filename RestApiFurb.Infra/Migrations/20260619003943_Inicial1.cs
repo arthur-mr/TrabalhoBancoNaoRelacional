@@ -12,6 +12,23 @@ namespace RestApiFurb.Infra.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
+                name: "OUTBOX_MESSAGE",
+                columns: table => new
+                {
+                    ID = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    TIPO_EVENTO = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    PAYLOAD = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    DATA_CRIACAO = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    PROCESSADO = table.Column<bool>(type: "bit", nullable: false),
+                    DATA_PROCESSAMENTO = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    ERRO = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_OUTBOX_MESSAGE", x => x.ID);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "PRODUTO",
                 columns: table => new
                 {
@@ -110,6 +127,9 @@ namespace RestApiFurb.Infra.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropTable(
+                name: "OUTBOX_MESSAGE");
+
             migrationBuilder.DropTable(
                 name: "PRODUTO_COMANDA");
 

@@ -3,4 +3,8 @@
 public sealed record ListarProdutoContrato(
     Guid Id,
     string Nome,
-    decimal Preco);
+    decimal Preco,
+    string Codigo,
+    string CodigoBarras,
+    string Categoria,
+    int QuantidadeEstoque);

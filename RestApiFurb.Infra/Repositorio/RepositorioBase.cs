@@ -1,52 +1,63 @@
-﻿using Microsoft.EntityFrameworkCore;
-using RestApiFurb.Dominio.Interfaces;
+﻿using RestApiFurb.Dominio.Interfaces;
 using RestApiFurb.Dominio.Modelos.Base;
 using RestApiFurb.Infra.Contextos;
 
 namespace RestApiFurb.Infra.Repositorio;
 
-internal sealed class RepositorioBase<T> : IRepositorioBase<T> where T : ModeloBase
+internal sealed class RepositorioBase : IRepositorioBase
 {
-    private readonly DbSet<T> dbSet;
     private readonly Contexto contexto;
 
     public RepositorioBase(Contexto contexto)
     {
         this.contexto = contexto;
-        dbSet = contexto.Set<T>();
     }
 
-    public async Task<T> ObterPorIdAsync(Guid id)
+    public async Task<T> ObterPorIdAsync<T>(Guid id) where T : ModeloBase
     {
-        return await dbSet.FindAsync(id);
+        return await contexto.Set<T>().FindAsync(new object[] { id });
     }
 
-    public IQueryable<T> MontarConsulta()
+    public IQueryable<T> MontarConsulta<T>() where T : ModeloBase
     {
-        return dbSet.AsQueryable();
+        return contexto.Set<T>().AsQueryable();
     }
 
-    public async Task SalvarAsync(T modelo, CancellationToken cancellationToken)
+    public async Task AdicionarAsync<T>(T modelo, CancellationToken cancellationToken) where T : ModeloBase
     {
-        await dbSet.AddAsync(modelo);
-        await contexto.SaveChangesAsync(cancellationToken);
+        contexto.Set<T>().Add(modelo);
+        if (contexto.Database.CurrentTransaction == null)
+            await contexto.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task SalvarAsync(IList<T> modelos, CancellationToken cancellationToken)
+    public async Task AdicionarAsync<T>(IList<T> modelos, CancellationToken cancellationToken) where T : ModeloBase
     {
-        await dbSet.AddRangeAsync(modelos, cancellationToken);
-        await contexto.SaveChangesAsync(cancellationToken);
+        if (!modelos.Any()) return;
+
+        contexto.Set<T>().AddRange(modelos);
+        if (contexto.Database.CurrentTransaction == null)
+            await contexto.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task AtualizarAsync(T modelo, CancellationToken cancellationToken)
+    public async Task AtualizarAsync<T>(T modelo, CancellationToken cancellationToken) where T : ModeloBase
     {
-        dbSet.Update(modelo);
-        await contexto.SaveChangesAsync(cancellationToken);
+        contexto.Set<T>().Update(modelo);
+        if (contexto.Database.CurrentTransaction == null)
+            await contexto.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task DeletarAsync(Guid id, CancellationToken cancellationToken)
+    public async Task AtualizarAsync<T>(IList<T> modelos, CancellationToken cancellationToken) where T : ModeloBase
     {
+        contexto.Set<T>().UpdateRange(modelos);
+        if (contexto.Database.CurrentTransaction == null)
+            await contexto.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task DeletarAsync<T>(Guid id, CancellationToken cancellationToken) where T : ModeloBase
+    {
+        var dbSet = contexto.Set<T>();
         var entidade = await dbSet.FindAsync(new object[] { id }, cancellationToken);
+
         if (entidade == null)
             throw new KeyNotFoundException($"Entidade do tipo {typeof(T).Name} com id {id} não encontrada.");
 
@@ -60,6 +71,24 @@ internal sealed class RepositorioBase<T> : IRepositorioBase<T> where T : ModeloB
             dbSet.Remove(entidade);
         }
 
-        await contexto.SaveChangesAsync(cancellationToken);
+        if (contexto.Database.CurrentTransaction == null)
+            await contexto.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task ExecutarOperacoesEmTransacaoAsync(Func<IRepositorioBase, Task> acao, CancellationToken cancellationToken)
+    {
+        await contexto.Database.BeginTransactionAsync(cancellationToken);
+
+        try
+        {
+            await acao(this);
+            await contexto.SaveChangesAsync(cancellationToken);
+            await contexto.Database.CommitTransactionAsync(cancellationToken);
+        }
+        catch
+        {
+            await contexto.Database.RollbackTransactionAsync(cancellationToken);
+            throw;
+        }
     }
 }

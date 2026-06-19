@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using RestApiFurb.Api.ViewModels;
 using RestApiFurb.Dominio.Contratos;
+using RestApiFurb.Dominio.Mediator.Comandos.Consultas;
 using RestApiFurb.Dominio.Mediator.Comandos.Requisicoes;
 using System.Text.RegularExpressions;
 
@@ -33,6 +34,26 @@ public class UsuarioController : ControllerBase
         await mediator.Send(comando);
 
         return Ok("Usuário cadastrado com sucesso!");
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> ObterUsuarios([FromQuery] int offset)
+    {
+        var consulta = new ObterUsuariosConsulta(offset);
+        var contratos = await mediator.Send(consulta);
+
+        if (contratos is null)
+            return null;
+
+        var viewModels = contratos
+            .Select(x => new ListarUsuarioViewModel(
+                Id: x.Id,
+                Nome: x.Nome,
+                Email: x.Email,
+                Telefone: x.Telefone))
+            .ToList();
+
+        return Ok(viewModels);
     }
 
     private (bool, string) ValidarViewModel(CriarUsuarioViewModel viewModel)

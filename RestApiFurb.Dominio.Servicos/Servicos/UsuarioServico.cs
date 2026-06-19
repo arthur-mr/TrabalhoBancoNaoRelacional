@@ -1,4 +1,5 @@
-﻿using RestApiFurb.Dominio.Contratos;
+﻿using Microsoft.EntityFrameworkCore;
+using RestApiFurb.Dominio.Contratos;
 using RestApiFurb.Dominio.Interfaces;
 using RestApiFurb.Dominio.Modelos;
 
@@ -6,9 +7,9 @@ namespace RestApiFurb.Dominio.Servicos.Servicos;
 
 internal sealed class UsuarioServico : IUsuarioServico
 {
-    private readonly IRepositorioBase<Usuario> repositorio;
+    private readonly IRepositorioBase repositorio;
 
-    public UsuarioServico(IRepositorioBase<Usuario> repositorio)
+    public UsuarioServico(IRepositorioBase repositorio)
     {
         this.repositorio = repositorio;
     }
@@ -17,6 +18,15 @@ internal sealed class UsuarioServico : IUsuarioServico
     {
         var usuario = new Usuario(nome: contrato.Nome, email: contrato.Email, telefone: contrato.Telefone);
 
-        await repositorio.SalvarAsync(usuario, cancellationToken);
+        await repositorio.AdicionarAsync(usuario, cancellationToken);
+    }
+
+    public async Task<IList<ListarUsuarioContrato>> ObterUsuariosAsync(int offset, CancellationToken cancellationToken)
+    {
+        return await repositorio.MontarConsulta<Usuario>()
+            .Skip(offset)
+            .Take(10)
+            .Select(x => new ListarUsuarioContrato(x.Id, x.Nome, x.Email, x.Telefone))
+            .ToListAsync(cancellationToken);
     }
 }

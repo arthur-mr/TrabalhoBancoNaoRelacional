@@ -1,17 +1,16 @@
-﻿using RestApiFurb.Dominio.Interfaces;
+﻿using Bogus.Extensions.UnitedKingdom;
+using RestApiFurb.Dominio.Interfaces;
 using RestApiFurb.Dominio.Modelos;
 using RestApiFurb.ImportadorDados.Fakers;
-using System;
-using System.Collections.Generic;
-using System.Text;
+using System.Text.Json;
 
 namespace RestApiFurb.ImportadorDados.Importador;
 
 internal sealed class ProdutoImportador
 {
-    private readonly IRepositorioBase<Produto> repositorio;
+    private readonly IRepositorioBase repositorio;
 
-    public ProdutoImportador(IRepositorioBase<Produto> repositorio)
+    public ProdutoImportador(IRepositorioBase repositorio)
     {
         this.repositorio = repositorio;
     }
@@ -24,7 +23,29 @@ internal sealed class ProdutoImportador
         while (quantidadeAdicionada < 1000000)
         {
             var produtos = ProdutoFaker.GerarMassaDeDados(tamanhopagina);
-            await repositorio.SalvarAsync(produtos, cancellationToken);
+            await repositorio.AdicionarAsync(produtos, cancellationToken);
+            
+            var outbox = new List<OutboxMessage>();
+            foreach (var produto in produtos)
+            {
+                var payloadObj = new
+                {
+                    produto.Id,
+                    produto.Nome
+                };
+
+                var payloadJson = JsonSerializer.Serialize(payloadObj);
+
+                var outboxMessage = new OutboxMessage(
+                    tipoEvento: "ProdutoCriado",
+                    payload: payloadJson);
+
+                outbox.Add(outboxMessage);
+
+            }
+
+            await repositorio.AdicionarAsync(outbox, cancellationToken);
+
             quantidadeAdicionada += tamanhopagina;
         }
     }

@@ -1,5 +1,6 @@
 ﻿using RestApiFurb.Api.ViewModels;
 using RestApiFurb.Dominio.Contratos;
+using RestApiFurb.Dominio.Modelos;
 
 namespace RestApiFurb.Api.Conversores;
 
@@ -33,6 +34,10 @@ internal sealed class ComandaConversor : IComandaConversor
         return new ListarProdutoViewModel(
             Id: contrato.Id,
             Nome: contrato.Nome,
-            Preco: contrato.Preco);
+            Preco: contrato.Preco,
+            Codigo: contrato.Codigo,
+            CodigoBarras: contrato.CodigoBarras,
+            Categoria: contrato.Categoria,
+            QuantidadeEstoque: contrato.QuantidadeEstoque);
     }
 }

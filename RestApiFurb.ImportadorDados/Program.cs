@@ -26,7 +26,7 @@ class Program
 
         var services = new ServiceCollection();
 
-        services.AdicionarBancoDeDados(connectionString);
+        services.AdicionarBancoDeDados(configuration);
         services.AddScoped<ProdutoImportador>();
         var serviceProvider = services.BuildServiceProvider();
 

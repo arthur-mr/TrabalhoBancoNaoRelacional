@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using RestApiFurb.Dominio.Interfaces;
 using RestApiFurb.Infra.Contextos;
@@ -8,11 +9,11 @@ namespace RestApiFurb.Infra.Modulos;
 
 public static class InstalarDependencias
 {
-    public static IServiceCollection AdicionarBancoDeDados(
-        this IServiceCollection services, string connectionString)
+    public static IServiceCollection AdicionarBancoDeDados(this IServiceCollection services, IConfiguration configuracoes)
     {
+        var connectionString = configuracoes.GetConnectionString("DefaultConnection");
         services.AddDbContext<Contexto>(options => options.UseSqlServer(connectionString));
-        services.AddScoped(typeof(IRepositorioBase<>), typeof(RepositorioBase<>));
+        services.AddScoped<IRepositorioBase, RepositorioBase>();
 
         return services;
     }
