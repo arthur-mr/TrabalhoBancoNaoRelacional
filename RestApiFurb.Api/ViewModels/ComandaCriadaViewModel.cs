@@ -4,7 +4,7 @@ namespace RestApiFurb.Api.ViewModels;
 
 public sealed record ComandaCriadaViewModel(
     Guid Id,
-    Guid UsuarioId,
-    string NomeUsuario,
-    string TelefoneUsuario,
+    Guid ClienteId,
+    string NomeCliente,
+    string TelefoneCliente,
     IList<ListarProdutoViewModel> Produtos);

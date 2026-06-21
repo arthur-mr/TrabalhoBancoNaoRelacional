@@ -1,6 +1,6 @@
 ﻿namespace RestApiFurb.Dominio.Contratos;
 
 public sealed record NotificarComandaCriadaContrato(
-    string NomeUsuario,
-    string EmailUsuario,
+    string NomeCliente,
+    string EmailCliente,
     ComandaCriadaContrato Comanda);

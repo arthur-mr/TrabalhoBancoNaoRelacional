@@ -13,7 +13,7 @@ public static class InstalarDependencias
     {
         services.AdicionarBancoDeDados(configuracoes);
 
-        services.AddScoped<IUsuarioServico, UsuarioServico>();
+        services.AddScoped<IClienteServico, ClienteServico>();
         services.AddScoped<IComandaServico, ComandaServico>();
         services.AddScoped<IProdutoServico, ProdutoServico>();
         services.AddScoped<IOutboxServico, OutboxServico>();

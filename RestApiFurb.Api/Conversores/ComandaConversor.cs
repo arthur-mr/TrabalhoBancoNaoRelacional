@@ -1,6 +1,5 @@
 ﻿using RestApiFurb.Api.ViewModels;
 using RestApiFurb.Dominio.Contratos;
-using RestApiFurb.Dominio.Modelos;
 
 namespace RestApiFurb.Api.Conversores;
 
@@ -8,24 +7,35 @@ internal sealed class ComandaConversor : IComandaConversor
 {
     public AtualizarComandaContrato ConvertarParaContrato(AtualizarComandaViewModel viewModel)
     {
+        if (viewModel is null)
+            return null;
+
+        var itensAdicionar = viewModel.ProdutosParaAdicionar.Select(x => new CriarComandaItemContrato(x.ProdutoId, x.Quantidade)).ToList();
+        var itensRemover = viewModel.ProdutosParaRemover.Select(x => new CriarComandaItemContrato(x.ProdutoId, x.Quantidade)).ToList();
+
         return new AtualizarComandaContrato(
-            UsuarioId: viewModel.UsuarioId,
-            ProdutosParaRemover: viewModel.ProdutosParaRemover,
-            ProdutosParaAdicionar: viewModel.ProdutosParaAdicionar);
+            ClienteId: viewModel.ClienteId,
+            ProdutosParaRemover: itensRemover,
+            ProdutosParaAdicionar: itensAdicionar);
     }
 
     public CriarComandaContrato ConverterParaContrato(CriarComandaViewModel viewModel)
     {
-        return new CriarComandaContrato(UsuarioId: viewModel.UsuarioId, ProdutosIds: viewModel.ProdutosIds);
+        if (viewModel is null)
+            return null;
+
+        var itens = viewModel.Itens?.Select(x => new CriarComandaItemContrato(x.ProdutoId, x.Quantidade)).ToList();
+
+        return new CriarComandaContrato(Identificacao: viewModel.Identificacao, Itens: itens);
     }
 
     public ComandaCriadaViewModel ConverterParaViewModel(ComandaCriadaContrato contrato)
     {
         return new ComandaCriadaViewModel(
          Id: contrato.Id,
-         UsuarioId: contrato.UsuarioId,
-         NomeUsuario: contrato.NomeUsuario,
-         TelefoneUsuario: contrato.TelefoneUsuario,
+         ClienteId: contrato.ClienteId,
+         NomeCliente: contrato.NomeCliente,
+         TelefoneCliente: contrato.TelefoneCliente,
          Produtos: contrato.Produtos.Select(ConverterParaViewModel).ToList());
     }
 

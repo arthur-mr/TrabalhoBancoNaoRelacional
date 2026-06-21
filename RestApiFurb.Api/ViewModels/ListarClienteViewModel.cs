@@ -1,6 +1,6 @@
 ﻿namespace RestApiFurb.Api.ViewModels;
 
-public sealed record ListarUsuarioViewModel(
+public sealed record ListarClienteViewModel(
     Guid Id,
     string Nome,
     string Email,

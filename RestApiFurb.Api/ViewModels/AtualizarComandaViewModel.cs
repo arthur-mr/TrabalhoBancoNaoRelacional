@@ -1,6 +1,6 @@
 ﻿namespace RestApiFurb.Api.ViewModels;
 
 public sealed record AtualizarComandaViewModel(
-    Guid? UsuarioId,
-    IList<Guid> ProdutosParaRemover,
-    IList<Guid> ProdutosParaAdicionar);
+    Guid? ClienteId,
+    IList<CriarComandaItemViewModel> ProdutosParaRemover,
+    IList<CriarComandaItemViewModel> ProdutosParaAdicionar);

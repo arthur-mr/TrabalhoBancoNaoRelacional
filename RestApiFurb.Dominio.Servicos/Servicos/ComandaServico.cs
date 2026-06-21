@@ -50,7 +50,7 @@ internal sealed class ComandaServico : IComandaServico
 
         var entidade = new Comanda(
             id: comandaId,
-            usuarioId: Guid.NewGuid(),
+            ClienteId: Guid.NewGuid(),
             identificacao: contrato.Identificacao,
             produtoComandas: produtosComanda);
 
@@ -58,13 +58,13 @@ internal sealed class ComandaServico : IComandaServico
 
         var retorno = new ComandaCriadaContrato(
             Id: entidade.Id,
-            UsuarioId: Guid.NewGuid(),
+            ClienteId: entidade.ClienteId,
             Identificacao: entidade.Identificacao,
+            NomeCliente: entidade.Cliente.Nome,
+            TelefoneCliente: entidade.Cliente.Telefone,
             Produtos: produtosRetorno);
 
-        var mensagem = new ComandaCriadaMensagem(
-            Identificacao: entidade.Identificacao,
-            Comanda: retorno);
+        var mensagem = new ComandaCriadaMensagem(NomeCliente: entidade.Cliente.Nome, EmailCliente: entidade.Cliente.Email, retorno);
 
         mensageria.Publicar(mensagem);
 
@@ -78,7 +78,7 @@ internal sealed class ComandaServico : IComandaServico
             .Where(x => x.Ativo)
             .Include(c => c.ProdutosComanda)
             .ThenInclude(pc => pc.Produto)
-            .Include(c => c.Usuario)
+            .Include(c => c.Cliente)
             .ToListAsync(cancellationToken);
 
         var contratos = comandas.Select(c =>
@@ -96,9 +96,10 @@ internal sealed class ComandaServico : IComandaServico
 
             return new ComandaCriadaContrato(
                 Id: c.Id,
-                UsuarioId: c.Usuario.Id,
-                NomeUsuario: c.Usuario.Nome,
-                TelefoneUsuario: c.Usuario.Telefone,
+                ClienteId: c.Cliente.Id,
+                Identificacao: c.Identificacao,
+                NomeCliente: c.Cliente.Nome,
+                TelefoneCliente: c.Cliente.Telefone,
                 Produtos: produtos);
         })
         .ToList();
@@ -113,7 +114,7 @@ internal sealed class ComandaServico : IComandaServico
             .Where(x => x.Ativo)
             .Include(c => c.ProdutosComanda)
             .ThenInclude(pc => pc.Produto)
-            .Include(c => c.Usuario)
+            .Include(c => c.Cliente)
             .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
 
         if (comanda is null)
@@ -132,9 +133,10 @@ internal sealed class ComandaServico : IComandaServico
 
         return new ComandaCriadaContrato(
             Id: comanda.Id,
-            UsuarioId: comanda.Usuario.Id,
-            NomeUsuario: comanda.Usuario.Nome,
-            TelefoneUsuario: comanda.Usuario.Telefone,
+            ClienteId: comanda.Cliente.Id,
+            Identificacao: comanda.Identificacao,
+            NomeCliente: comanda.Cliente.Nome,
+            TelefoneCliente: comanda.Cliente.Telefone,
             Produtos: produtos);
     }
 
@@ -148,24 +150,24 @@ internal sealed class ComandaServico : IComandaServico
         if (comanda is null)
             throw new KeyNotFoundException($"Comanda {id} não encontrada.");
 
-        if (contrato.UsuarioId.HasValue)
+        if (contrato.ClienteId.HasValue)
         {
             var existe = await repositorio
-                .MontarConsulta<Usuario>()
-                .AnyAsync(u => u.Id == contrato.UsuarioId.Value, cancellationToken);
+                .MontarConsulta<Cliente>()
+                .AnyAsync(u => u.Id == contrato.ClienteId.Value, cancellationToken);
 
             if (!existe)
-                throw new KeyNotFoundException($"Usuário {contrato.UsuarioId.Value} não encontrado.");
+                throw new KeyNotFoundException($"Usuário {contrato.ClienteId.Value} não encontrado.");
 
-            comanda.AtualizarUsuarioId(contrato.UsuarioId.Value);
+            comanda.AtualizarClienteId(contrato.ClienteId.Value);
         }
 
-        foreach (var produtoIdRemover in contrato.ProdutosParaRemover)
+        foreach (var produtoRemover in contrato.ProdutosParaRemover)
         {
-            var produtoParaRemover = comanda.ProdutosComanda.FirstOrDefault(pc => pc.ProdutoId == produtoIdRemover);
+            var produtoParaRemover = comanda.ProdutosComanda.FirstOrDefault(pc => pc.ProdutoId == produtoRemover.ProdutoId);
 
             if (produtoParaRemover is null)
-                throw new KeyNotFoundException($"Produto {produtoIdRemover} não está na comanda ou foi removido mais que a quantidade presente.");
+                throw new KeyNotFoundException($"Produto {produtoRemover.ProdutoId} não está na comanda ou foi removido mais que a quantidade presente.");
 
             comanda.ProdutosComanda.Remove(produtoParaRemover);
 
@@ -174,16 +176,16 @@ internal sealed class ComandaServico : IComandaServico
             await repositorio.DeletarAsync<ProdutoComanda>(produtoComanda.Id, cancellationToken);
         }
 
-        foreach (var produtoIdAdicionar in contrato.ProdutosParaAdicionar)
+        foreach (var produtoAdicionar in contrato.ProdutosParaAdicionar)
         {
             var existe = await repositorio
                 .MontarConsulta<Produto>()
-                .AnyAsync(p => p.Id == produtoIdAdicionar, cancellationToken);
+                .AnyAsync(p => p.Id == produtoAdicionar.ProdutoId, cancellationToken);
 
             if (!existe)
-                throw new KeyNotFoundException($"Produto {produtoIdAdicionar} não existe.");
+                throw new KeyNotFoundException($"Produto {produtoAdicionar.ProdutoId} não existe.");
 
-            comanda.ProdutosComanda.Add(new ProdutoComanda(comandaId: comanda.Id, produtoId: produtoIdAdicionar));
+            comanda.ProdutosComanda.Add(new ProdutoComanda(comandaId: comanda.Id, produtoId: produtoAdicionar.ProdutoId, quantidade: produtoAdicionar.Quantidade));
         }
 
         await repositorio.AtualizarAsync(comanda, cancellationToken);

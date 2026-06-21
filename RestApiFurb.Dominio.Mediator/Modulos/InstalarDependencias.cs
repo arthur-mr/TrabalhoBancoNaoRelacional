@@ -9,7 +9,7 @@ public static class InstalarDependencias
 {
     public static void AdicionarInfraEstrutura(this IServiceCollection services, IConfiguration configuracoes)
     {
-        services.AddMediatR(x => x.RegisterServicesFromAssembly(typeof(CriarUsuarioComando).Assembly));
+        services.AddMediatR(x => x.RegisterServicesFromAssembly(typeof(CriarClienteComando).Assembly));
         services.AdicionarServicos(configuracoes);
     }
 }

@@ -2,13 +2,13 @@
 
 namespace RestApiFurb.Dominio.Modelos;
 
-public class Usuario : ModeloComExclusao
+public class Cliente : ModeloComExclusao
 {
     public string Nome { get; private set; }
     public string Email { get; private set; }
     public string Telefone { get; private set; }
 
-    public Usuario(string nome, string email, string telefone)
+    public Cliente(string nome, string email, string telefone)
     {
         Nome = nome;
         Email = email;

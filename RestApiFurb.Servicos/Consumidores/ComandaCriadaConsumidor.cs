@@ -18,8 +18,8 @@ internal sealed class ComandaCriadaConsumidor : ConsumidorBase<ComandaCriadaMens
     {
         Console.WriteLine($"Consumindo mensagem: {mensagem}");
         var contrato = new NotificarComandaCriadaContrato(
-            NomeUsuario: mensagem.NomeUsuario,
-            EmailUsuario: mensagem.EmailUsuario,
+            NomeCliente: mensagem.NomeCliente,
+            EmailCliente: mensagem.EmailCliente,
             Comanda: mensagem.Comanda);
 
         var comando = new NotificarComandaCriadaComando(contrato);

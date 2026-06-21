@@ -19,7 +19,7 @@ internal sealed class NotificadorServico : INotificadorServico
     {
         var de = "notificadorcsharp@gmail.com";
         var senha = "fyou ezph wfds nsso";
-        var para = contrato.EmailUsuario;
+        var para = contrato.EmailCliente;
 
         var smtp = new SmtpClient("smtp.gmail.com", 587)
         {
@@ -32,7 +32,7 @@ internal sealed class NotificadorServico : INotificadorServico
         var email = new MailMessage(de, para)
         {
             Subject = "Seu pedido já está sendo preparado!",
-            Body = $"Olá {contrato.NomeUsuario}! Seu pedido já está sendo preparado!",
+            Body = $"Olá {contrato.NomeCliente}! Seu pedido já está sendo preparado!",
             IsBodyHtml = false
         };
 
