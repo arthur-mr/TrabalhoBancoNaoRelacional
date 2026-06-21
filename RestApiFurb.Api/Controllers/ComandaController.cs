@@ -5,11 +5,12 @@ using RestApiFurb.Api.Conversores;
 using RestApiFurb.Api.ViewModels;
 using RestApiFurb.Dominio.Mediator.Comandos.Consultas;
 using RestApiFurb.Dominio.Mediator.Comandos.Requisicoes;
+using RestApiFurb.Dominio.Modelos;
 
 namespace RestApiFurb.Api.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/[controller]/[Action]")]
 [Authorize]
 public class ComandaController : ControllerBase
 {
@@ -80,6 +81,14 @@ public class ComandaController : ControllerBase
         {
             return BadRequest($"Erro ao criar comanda: {ex.Message}");
         }
+    }
+
+    [HttpPut("{comandaId:guid}")]
+    public async Task<IActionResult> AtualizarStatusComanda([FromRoute] Guid comandaId, [FromQuery] StatusComanda status)
+    {
+        var comando = new AtualizarStatusComandaComando(comandaId, status);
+        await mediator.Send(comando);
+        return Ok();
     }
 
     [HttpPut("{id:guid}")]

@@ -13,14 +13,14 @@ public class TokenController : ControllerBase
     private const string ChaveSecreta = "chave-super-secreta-com-mais-de-32-caracteres";
 
     [HttpPost]
-    public IActionResult Post([FromForm] string Cliente, [FromForm] string senha)
+    public IActionResult Post([FromForm] string Usuario, [FromForm] string senha)
     {
-        if (Cliente != "admin" || senha != "1234")
+        if (Usuario != "admin" || senha != "1234")
             return Unauthorized();
 
         var claims = new[]
         {
-            new Claim(JwtRegisteredClaimNames.Sub, Cliente),
+            new Claim(JwtRegisteredClaimNames.Sub, Usuario),
             new Claim("role", "Admin")
         };
 

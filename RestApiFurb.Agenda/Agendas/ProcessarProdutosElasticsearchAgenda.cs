@@ -5,30 +5,24 @@ using RestApiFurb.Dominio.Mediator.Comandos.Requisicoes;
 
 namespace RestApiFurb.Agenda.Agendas;
 
-internal sealed class ProcessarProdutosElasticsearchAgenda : TarefaAgendadaComSetupBase<Guid>
+internal sealed class ProcessarProdutosElasticsearchAgenda : TarefaAgendadaBase
 {
     private readonly IMediator mediator;
 
-    protected override ushort QuantidadeProcessamentoEmParalelo => 1;
-
     public ProcessarProdutosElasticsearchAgenda(
-        ILogger<TarefaAgendadaComSetupBase<Guid>> logger,
-        IServiceScopeFactory fabricaEscopo,
+        ILogger<TarefaAgendadaBase> logger,
         IMediator mediator)
-        : base(logger, fabricaEscopo)
+        : base(logger)
     {
         this.mediator = mediator;
     }
 
-    protected override Task<IList<Guid>> ObterDadosParaProcessar(CancellationToken cancellationToken)
+    protected override async Task ExecutarOperacaoAsync(CancellationToken cancellationToken)
     {
         var consulta = new ObterProdutoOutboxConsulta();
-        return mediator.Send(consulta);
-    }
+        var dados = await mediator.Send(consulta);
 
-    protected override Task ExecutarOperacaoAsync(Guid dado, CancellationToken cancellationToken)
-    {
-        var comando = new SalvarProdutoOutboxComando(dado);
-        return mediator.Send(comando);
+        var comando = new SalvarProdutoOutboxComando(dados);
+        await mediator.Send(comando);
     }
 }

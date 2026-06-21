@@ -1,0 +1,148 @@
+﻿using System;
+using Microsoft.EntityFrameworkCore.Migrations;
+
+#nullable disable
+
+namespace RestApiFurb.Infra.Migrations
+{
+    /// <inheritdoc />
+    public partial class Inicial1 : Migration
+    {
+        /// <inheritdoc />
+        protected override void Up(MigrationBuilder migrationBuilder)
+        {
+            migrationBuilder.CreateTable(
+                name: "CLIENTE",
+                columns: table => new
+                {
+                    ID = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    NOME = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    EMAIL = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    TELEFONE = table.Column<string>(type: "nvarchar(12)", maxLength: 12, nullable: false),
+                    ATIVO = table.Column<bool>(type: "bit", nullable: false, defaultValueSql: "1"),
+                    DATA_ATIVACAO = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETDATE()"),
+                    DATA_DESATIVACAO = table.Column<DateTime>(type: "datetime2", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_CLIENTE", x => x.ID);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "OUTBOX_MESSAGE",
+                columns: table => new
+                {
+                    ID = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    TIPO_EVENTO = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    PAYLOAD = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    DATA_CRIACAO = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    PROCESSADO = table.Column<bool>(type: "bit", nullable: false),
+                    DATA_PROCESSAMENTO = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    ERRO = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_OUTBOX_MESSAGE", x => x.ID);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "PRODUTO",
+                columns: table => new
+                {
+                    ID = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    NOME = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    PRECO = table.Column<decimal>(type: "decimal(10,2)", precision: 10, scale: 2, nullable: false),
+                    CODIGO = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    CODIGO_BARRAS = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    CATEGORIA = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    QUANTIDADE_ESTOQUE = table.Column<int>(type: "int", nullable: false),
+                    ATIVO = table.Column<bool>(type: "bit", nullable: false, defaultValueSql: "1"),
+                    DATA_ATIVACAO = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETDATE()"),
+                    DATA_DESATIVACAO = table.Column<DateTime>(type: "datetime2", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_PRODUTO", x => x.ID);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "COMANDA",
+                columns: table => new
+                {
+                    ID = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    CLIENTE_FK = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Identificacao = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    ATIVO = table.Column<bool>(type: "bit", nullable: false, defaultValueSql: "1"),
+                    DATA_ATIVACAO = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETDATE()"),
+                    DATA_DESATIVACAO = table.Column<DateTime>(type: "datetime2", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_COMANDA", x => x.ID);
+                    table.ForeignKey(
+                        name: "FK_COMANDA_CLIENTE_CLIENTE_FK",
+                        column: x => x.CLIENTE_FK,
+                        principalTable: "CLIENTE",
+                        principalColumn: "ID");
+                });
+
+            migrationBuilder.CreateTable(
+                name: "PRODUTO_COMANDA",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    COMANDA_FK = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    PRODUTO_FK = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    QUANTIDADE = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_PRODUTO_COMANDA", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_PRODUTO_COMANDA_COMANDA_COMANDA_FK",
+                        column: x => x.COMANDA_FK,
+                        principalTable: "COMANDA",
+                        principalColumn: "ID");
+                    table.ForeignKey(
+                        name: "FK_PRODUTO_COMANDA_PRODUTO_PRODUTO_FK",
+                        column: x => x.PRODUTO_FK,
+                        principalTable: "PRODUTO",
+                        principalColumn: "ID");
+                });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_COMANDA_CLIENTE_FK",
+                table: "COMANDA",
+                column: "CLIENTE_FK");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PRODUTO_COMANDA_COMANDA_FK",
+                table: "PRODUTO_COMANDA",
+                column: "COMANDA_FK");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PRODUTO_COMANDA_PRODUTO_FK",
+                table: "PRODUTO_COMANDA",
+                column: "PRODUTO_FK");
+        }
+
+        /// <inheritdoc />
+        protected override void Down(MigrationBuilder migrationBuilder)
+        {
+            migrationBuilder.DropTable(
+                name: "OUTBOX_MESSAGE");
+
+            migrationBuilder.DropTable(
+                name: "PRODUTO_COMANDA");
+
+            migrationBuilder.DropTable(
+                name: "COMANDA");
+
+            migrationBuilder.DropTable(
+                name: "PRODUTO");
+
+            migrationBuilder.DropTable(
+                name: "CLIENTE");
+        }
+    }
+}

@@ -13,13 +13,15 @@ internal class ComandaMap : IEntityTypeConfiguration<Comanda>
     {
         MapeamentoComum.MapearComum(builder);
         builder.ToTable(NOME_TABELA);
-        builder.Property(x => x.ClienteId).HasColumnName("CLIENTE_FK").IsRequired();
+        builder.Property(x => x.ClienteId).HasColumnName("CLIENTE_FK").IsRequired(false);
+        builder.Property(x => x.Identificacao).HasColumnName("IDENTIFICACAO").IsRequired();
+        builder.Property(x => x.Status).HasColumnName("STATUS").IsRequired();
 
         builder.HasOne(x => x.Cliente)
             .WithMany()
             .HasForeignKey(x => x.ClienteId)
             .OnDelete(DeleteBehavior.NoAction)
-            .IsRequired();
+            .IsRequired(false);
 
         builder.HasMany(c => c.ProdutosComanda)
             .WithOne(pc => pc.Comanda)

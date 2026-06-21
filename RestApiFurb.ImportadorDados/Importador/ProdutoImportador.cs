@@ -20,7 +20,7 @@ internal sealed class ProdutoImportador
         int tamanhopagina = 10000;
         int quantidadeAdicionada = 0;
 
-        while (quantidadeAdicionada < 1000000)
+        while (quantidadeAdicionada < 10000000)
         {
             var produtos = ProdutoFaker.GerarMassaDeDados(tamanhopagina);
             await repositorio.AdicionarAsync(produtos, cancellationToken);
@@ -45,6 +45,7 @@ internal sealed class ProdutoImportador
             }
 
             await repositorio.AdicionarAsync(outbox, cancellationToken);
+            Console.WriteLine($"Produtos adicionados com sucesso: Quantidade {produtos.Count}");
 
             quantidadeAdicionada += tamanhopagina;
         }

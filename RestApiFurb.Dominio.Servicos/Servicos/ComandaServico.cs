@@ -1,7 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using RestApiFurb.Dominio.Contratos;
 using RestApiFurb.Dominio.Interfaces;
-using RestApiFurb.Dominio.Mensagens;
 using RestApiFurb.Dominio.Modelos;
 
 namespace RestApiFurb.Dominio.Servicos.Servicos;
@@ -23,7 +22,17 @@ internal sealed class ComandaServico : IComandaServico
     {
         var comandaId = Guid.NewGuid();
         var produtosComanda = new List<ProdutoComanda>();
-        var produtosRetorno = new List<ListarProdutoContrato>();
+        var produtosRetorno = new List<ProdutoComandaContrato>();
+
+        Cliente cliente = null;
+
+        if (contrato.ClienteId.HasValue)
+        {
+            cliente = await repositorio.ObterPorIdAsync<Cliente>(contrato.ClienteId.Value);
+
+            if (cliente is null)
+                throw new Exception($"Cliente com id {contrato.ClienteId.Value} não encontrado");
+        }
 
         foreach (var item in contrato.Itens)
         {
@@ -35,14 +44,11 @@ internal sealed class ComandaServico : IComandaServico
                 produtoId: produto.Id,
                 quantidade: item.Quantidade);
 
-            var produtoRetorno = new ListarProdutoContrato(
+            var produtoRetorno = new ProdutoComandaContrato(
                 Id: produto.Id,
                 Nome: produto.Nome,
                 Preco: produto.Preco,
-                Codigo: produto.Codigo,
-                CodigoBarras: produto.CodigoBarras,
-                Categoria: produto.Categoria,
-                QuantidadeEstoque: produto.QuantidadeEstoque);
+                Quantidade: item.Quantidade);
 
             produtosComanda.Add(produtoComanda);
             produtosRetorno.Add(produtoRetorno);
@@ -50,23 +56,23 @@ internal sealed class ComandaServico : IComandaServico
 
         var entidade = new Comanda(
             id: comandaId,
-            ClienteId: Guid.NewGuid(),
+            clienteId: contrato.ClienteId,
             identificacao: contrato.Identificacao,
             produtoComandas: produtosComanda);
 
         await repositorio.AdicionarAsync(entidade, cancellationToken);
 
+        var valorTotal = entidade.ProdutosComanda.Sum(x => x.Produto.Preco * x.Quantidade);
+
         var retorno = new ComandaCriadaContrato(
             Id: entidade.Id,
             ClienteId: entidade.ClienteId,
             Identificacao: entidade.Identificacao,
-            NomeCliente: entidade.Cliente.Nome,
-            TelefoneCliente: entidade.Cliente.Telefone,
+            ValorTotal: valorTotal,
+            Status: entidade.Status,
+            NomeCliente: cliente?.Nome,
+            TelefoneCliente: cliente?.Telefone,
             Produtos: produtosRetorno);
-
-        var mensagem = new ComandaCriadaMensagem(NomeCliente: entidade.Cliente.Nome, EmailCliente: entidade.Cliente.Email, retorno);
-
-        mensageria.Publicar(mensagem);
 
         return retorno;
     }
@@ -83,23 +89,24 @@ internal sealed class ComandaServico : IComandaServico
 
         var contratos = comandas.Select(c =>
         {
+            var valorTotal = c.ProdutosComanda.Sum(x => x.Produto.Preco * x.Quantidade);
+
             var produtos = c.ProdutosComanda
-                .Select(pc => new ListarProdutoContrato(
+                .Select(pc => new ProdutoComandaContrato(
                     Id: pc.Produto.Id,
                     Nome: pc.Produto.Nome,
                     Preco: pc.Produto.Preco,
-                    Codigo: pc.Produto.Codigo,
-                    CodigoBarras: pc.Produto.CodigoBarras,
-                    Categoria: pc.Produto.Categoria,
-                    QuantidadeEstoque: pc.Produto.QuantidadeEstoque))
+                    Quantidade: pc.Quantidade))
                 .ToList();
 
             return new ComandaCriadaContrato(
                 Id: c.Id,
-                ClienteId: c.Cliente.Id,
+                ClienteId: c.Cliente?.Id,
                 Identificacao: c.Identificacao,
-                NomeCliente: c.Cliente.Nome,
-                TelefoneCliente: c.Cliente.Telefone,
+                ValorTotal: valorTotal,
+                Status: c.Status,
+                NomeCliente: c.Cliente?.Nome,
+                TelefoneCliente: c.Cliente?.Telefone,
                 Produtos: produtos);
         })
         .ToList();
@@ -121,22 +128,23 @@ internal sealed class ComandaServico : IComandaServico
             return null;
 
         var produtos = comanda.ProdutosComanda
-            .Select(pc => new ListarProdutoContrato(
+            .Select(pc => new ProdutoComandaContrato(
                 Id: pc.Produto.Id,
                 Nome: pc.Produto.Nome,
                 Preco: pc.Produto.Preco,
-                Codigo: pc.Produto.Codigo,
-                CodigoBarras: pc.Produto.CodigoBarras,
-                Categoria: pc.Produto.Categoria,
-                QuantidadeEstoque: pc.Produto.QuantidadeEstoque))
+                Quantidade: pc.Quantidade))
             .ToList();
+
+        var valorTotal = comanda.ProdutosComanda.Sum(x => x.Produto.Preco * x.Quantidade);
 
         return new ComandaCriadaContrato(
             Id: comanda.Id,
-            ClienteId: comanda.Cliente.Id,
+            ClienteId: comanda.Cliente?.Id,
             Identificacao: comanda.Identificacao,
-            NomeCliente: comanda.Cliente.Nome,
-            TelefoneCliente: comanda.Cliente.Telefone,
+            ValorTotal: valorTotal,
+            Status: comanda.Status,
+            NomeCliente: comanda.Cliente?.Nome,
+            TelefoneCliente: comanda.Cliente?.Telefone,
             Produtos: produtos);
     }
 
@@ -158,9 +166,10 @@ internal sealed class ComandaServico : IComandaServico
 
             if (!existe)
                 throw new KeyNotFoundException($"Usuário {contrato.ClienteId.Value} não encontrado.");
-
-            comanda.AtualizarClienteId(contrato.ClienteId.Value);
         }
+
+        comanda.AtualizarClienteId(contrato.ClienteId);
+        comanda.AtualizarStatus(contrato.Status);
 
         foreach (var produtoRemover in contrato.ProdutosParaRemover)
         {
@@ -194,5 +203,16 @@ internal sealed class ComandaServico : IComandaServico
     public async Task DeletarComandaAsync(Guid id, CancellationToken cancellationToken)
     {
         await repositorio.DeletarAsync<Comanda>(id, cancellationToken);
+    }
+
+    public async Task AtualizarStatusComandaAsync(Guid comandaId, StatusComanda status, CancellationToken cancellationToken)
+    {
+        var entidade = await repositorio.ObterPorIdAsync<Comanda>(comandaId);
+
+        if (entidade is null)
+            throw new Exception($"Não foi possível localizar a comanda com id {comandaId}");
+
+        entidade.AtualizarStatus(status);
+        await repositorio.AtualizarAsync(entidade, cancellationToken);
     }
 }

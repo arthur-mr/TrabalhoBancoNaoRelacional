@@ -17,7 +17,7 @@ public class ClienteController : ControllerBase
     private readonly IMediator mediator;
 
     public ClienteController(IMediator mediator)
-    {
+    { this.mediator = mediator;
         this.mediator = mediator;
     }
 
@@ -37,9 +37,10 @@ public class ClienteController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> ObterClientes([FromQuery] int offset)
+    public async Task<IActionResult> ObterClientes([FromQuery] FiltroClienteViewModel filtroViewModel)
     {
-        var consulta = new ObterClientesConsulta(offset);
+        var filtroContrato = new FiltroClienteContrato(filtroViewModel.Offset, filtroViewModel.Nome);
+        var consulta = new ObterClientesConsulta(filtroContrato);
         var contratos = await mediator.Send(consulta);
 
         if (contratos is null)

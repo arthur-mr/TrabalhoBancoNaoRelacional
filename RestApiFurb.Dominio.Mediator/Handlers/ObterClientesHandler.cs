@@ -16,7 +16,7 @@ internal class ObterClientesHandler : IRequestHandler<ObterClientesConsulta, ILi
 
     public Task<IList<ListarClienteContrato>> Handle(ObterClientesConsulta request, CancellationToken cancellationToken)
     {
-        return servico.ObterClientesAsync(request.Offset, cancellationToken);
+        return servico.ObterClientesAsync(request.Contrato, cancellationToken);
     }
 }
 

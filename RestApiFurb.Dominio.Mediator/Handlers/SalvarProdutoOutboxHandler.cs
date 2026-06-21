@@ -15,6 +15,6 @@ internal class SalvarProdutoOutboxHandler : IRequestHandler<SalvarProdutoOutboxC
 
     public Task Handle(SalvarProdutoOutboxComando request, CancellationToken cancellationToken)
     {
-        return servico.ProcessarMensagemAsync(request.Id, cancellationToken);
+        return servico.ProcessarMensagensEmMassaAsync(request.Ids, cancellationToken);
     }
 }

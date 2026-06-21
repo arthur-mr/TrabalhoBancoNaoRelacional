@@ -6,5 +6,5 @@ public interface IClienteServico
 {
     Task CriarClienteAsync(CriarClienteContrato contrato, CancellationToken cancellationToken);
 
-    Task<IList<ListarClienteContrato>> ObterClientesAsync(int offset, CancellationToken cancellationToken);
+    Task<IList<ListarClienteContrato>> ObterClientesAsync(FiltroClienteContrato filtroContrato, CancellationToken cancellationToken);
 }

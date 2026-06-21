@@ -15,6 +15,7 @@ internal sealed class ComandaConversor : IComandaConversor
 
         return new AtualizarComandaContrato(
             ClienteId: viewModel.ClienteId,
+            Status: viewModel.Status,
             ProdutosParaRemover: itensRemover,
             ProdutosParaAdicionar: itensAdicionar);
     }
@@ -26,7 +27,7 @@ internal sealed class ComandaConversor : IComandaConversor
 
         var itens = viewModel.Itens?.Select(x => new CriarComandaItemContrato(x.ProdutoId, x.Quantidade)).ToList();
 
-        return new CriarComandaContrato(Identificacao: viewModel.Identificacao, Itens: itens);
+        return new CriarComandaContrato(Identificacao: viewModel.Identificacao, ClienteId: viewModel.ClienteId, Itens: itens);
     }
 
     public ComandaCriadaViewModel ConverterParaViewModel(ComandaCriadaContrato contrato)
@@ -34,20 +35,20 @@ internal sealed class ComandaConversor : IComandaConversor
         return new ComandaCriadaViewModel(
          Id: contrato.Id,
          ClienteId: contrato.ClienteId,
+         Identificacao: contrato.Identificacao,
+         ValorTotal: contrato.ValorTotal,
+         Status: contrato.Status,
          NomeCliente: contrato.NomeCliente,
          TelefoneCliente: contrato.TelefoneCliente,
          Produtos: contrato.Produtos.Select(ConverterParaViewModel).ToList());
     }
 
-    private ListarProdutoViewModel ConverterParaViewModel(ListarProdutoContrato contrato)
+    private ProdutoComandaViewModel ConverterParaViewModel(ProdutoComandaContrato contrato)
     {
-        return new ListarProdutoViewModel(
+        return new ProdutoComandaViewModel(
             Id: contrato.Id,
             Nome: contrato.Nome,
             Preco: contrato.Preco,
-            Codigo: contrato.Codigo,
-            CodigoBarras: contrato.CodigoBarras,
-            Categoria: contrato.Categoria,
-            QuantidadeEstoque: contrato.QuantidadeEstoque);
+            Quantidade: contrato.Quantidade);
     }
 }

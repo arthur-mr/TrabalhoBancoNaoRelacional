@@ -5,7 +5,6 @@ using RestApiFurb.Api.ViewModels;
 using RestApiFurb.Dominio.Contratos;
 using RestApiFurb.Dominio.Mediator.Comandos.Consultas;
 using RestApiFurb.Dominio.Mediator.Comandos.Requisicoes;
-using RestApiFurb.Dominio.Modelos;
 
 namespace RestApiFurb.Api.Controllers;
 
@@ -64,7 +63,7 @@ public class ProdutoController : ControllerBase
             Categoria: contrato.Categoria,
             QuantidadeEstoque: contrato.QuantidadeEstoque);
 
-        return Ok(contrato);
+        return Ok(viewModel);
     }
 
     [HttpPost]
@@ -79,7 +78,7 @@ public class ProdutoController : ControllerBase
     public async Task<IActionResult> Autocomplete([FromQuery] string termo, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(termo) || termo.Length < 2)
-            return Ok(new List<Produto>());
+            return Ok(new List<ProdutoAutoCompleteViewModel>());
 
         var consulta = new ObterAutoCompleteConsulta(termo);
         var resultados = await mediator.Send(consulta, cancellationToken);

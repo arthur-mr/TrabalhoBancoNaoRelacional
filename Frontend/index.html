@@ -35,7 +35,7 @@
     <div class="container d-flex justify-content-between align-items-center">
         <div class="d-flex align-items-center gap-4">
             <h5 class="m-0 fw-bold text-white me-4" style="letter-spacing: -1px;">ERP</h5>
-            <span class="nav-link-custom active" id="nav-cadastros" onclick="mudarTela('painel')">Cadastros</span>
+            <span class="nav-link-custom active" id="nav-painel" onclick="mudarTela('painel')">Cadastros</span>
             <span class="nav-link-custom" id="nav-clientes" onclick="mudarTela('clientes')">Clientes</span>
             <span class="nav-link-custom" id="nav-comandas" onclick="mudarTela('comandas')">Comandas</span>
         </div>
@@ -132,6 +132,15 @@
     </div>
     <div class="card">
         <div class="card-body p-4">
+            <div class="row mb-3">
+                <div class="col-md-4">
+                    <div class="form-floating">
+                        <input type="text" class="form-control" id="buscar-cliente-nome" placeholder="Filtrar por nome..." oninput="filtrarClientes()">
+                        <label>Filtrar por nome...</label>
+                    </div>
+                </div>
+            </div>
+            
             <div class="table-responsive">
                 <table class="table table-hover table-custom" id="tabela-clientes">
                     <thead>
@@ -159,7 +168,7 @@
         <div class="card-body p-4">
             <div class="table-responsive">
                 <table class="table table-hover table-custom" id="tabela-comandas">
-                    <thead><tr><th>ID</th><th>Data</th><th>Status</th><th class="text-end">Total</th><th class="text-center">Ações</th></tr></thead>
+                    <thead><tr><th>ID / Identificação</th><th>Data</th><th>Status</th><th class="text-end">Total</th><th class="text-center">Ações</th></tr></thead>
                     <tbody id="tbody-comandas"><tr><td colspan="5" class="text-center py-4 text-muted">Carregando comandas...</td></tr></tbody>
                 </table>
             </div>
@@ -171,15 +180,23 @@
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content" style="border-radius: 8px; border: none; background-color: #ffffff;">
             <div class="modal-header border-bottom">
-                <h5 class="modal-title fw-bold text-dark">Abertura de Comanda</h5>
+                <h5 class="modal-title fw-bold text-dark" id="tituloModalComanda">Abertura de Comanda</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body p-4">
                 <div class="row g-3 mb-4">
-                    <div class="col-md-12">
+                    <div class="col-md-6">
                         <div class="form-floating">
                             <input type="text" class="form-control" id="comanda-identificacao" placeholder="Mesa ou Cliente" required>
-                            <label>Identificação (Ex: Mesa 12 ou Nome do Cliente)</label>
+                            <label>Identificação (Ex: Mesa 12)</label>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-floating">
+                            <select class="form-select" id="comanda-cliente-id">
+                                <option value="">Selecione um Cliente (Opcional)</option>
+                            </select>
+                            <label>Cliente Vinculado</label>
                         </div>
                     </div>
                 </div>
@@ -202,8 +219,15 @@
 
                 <h6 class="fw-bold text-dark">Itens da Comanda</h6>
                 <table class="table table-sm table-custom mt-2">
-                    <thead><tr><th>Produto</th><th>Qtd</th><th class="text-end">Ação</th></tr></thead>
-                    <tbody id="tbody-itens-comanda"><tr><td colspan="3" class="text-center text-muted small py-3">Nenhum item adicionado</td></tr></tbody>
+                    <thead><tr><th>Produto</th><th>Preço</th><th>Qtd</th><th class="text-end">Subtotal</th><th class="text-center">Ação</th></tr></thead>
+                    <tbody id="tbody-itens-comanda"><tr><td colspan="5" class="text-center text-muted small py-3">Nenhum item adicionado</td></tr></tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="3" class="text-end fw-bold">Total da Comanda:</td>
+                            <td class="text-end fw-bold text-success" id="comanda-total">R$ 0,00</td>
+                            <td></td>
+                        </tr>
+                    </tfoot>
                 </table>
             </div>
             <div class="modal-footer border-top bg-light">
@@ -220,9 +244,16 @@
 <script>
     const API_BASE_URL = 'https://localhost:5001'; 
     let modalComandaInstance;
+    
+    let comandaIdEdicao = null;
+    let comandaStatusEdicao = 1;
+    let itensComandaOriginais = [];
     let itensComandaTemporaria = [];
+    
     let timeoutBusca = null;
+    let timeoutBuscaCliente = null;
     let produtoSelecionado = null; 
+    let paginaAtual = 0; 
 
     window.onload = function() {
         modalComandaInstance = new bootstrap.Modal(document.getElementById('modalNovaComanda'));
@@ -268,7 +299,11 @@
     }
 
     function getAuthHeaders() {
-        return { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('jwtToken')}` };
+        return { 
+            'Content-Type': 'application/json', 
+            'Authorization': `Bearer ${localStorage.getItem('jwtToken')}`,
+            'Cache-Control': 'no-cache'
+        };
     }
 
     function iniciarSessao() {
@@ -277,18 +312,23 @@
         mudarTela('painel');
     }
 
-    function fazerLogout() {
+    function fazerLogout(mensagemErro = null) {
         localStorage.removeItem('jwtToken');
         document.querySelectorAll('.view-section').forEach(el => el.classList.add('d-none'));
         document.getElementById('nav-superior').classList.add('d-none');
         document.getElementById('tela-login').classList.remove('d-none');
         document.getElementById('form-login').reset();
+        
+        if (mensagemErro) {
+            mostrarNotificacao(mensagemErro, 'error');
+        }
     }
 
     function mudarTela(telaAlvo) {
         document.querySelectorAll('.view-section').forEach(el => el.classList.add('d-none'));
         document.getElementById(`tela-${telaAlvo}`).classList.remove('d-none');
-        document.getElementById('nav-cadastros').classList.remove('active');
+        
+        document.getElementById('nav-painel').classList.remove('active');
         document.getElementById('nav-clientes').classList.remove('active');
         document.getElementById('nav-comandas').classList.remove('active');
         document.getElementById(`nav-${telaAlvo}`).classList.add('active');
@@ -315,7 +355,6 @@
             if (res.ok) { 
                 const data = await res.json();
                 localStorage.setItem('jwtToken', data.access_token); 
-                
                 statusText.innerText = "Preparando índices do Elasticsearch...";
 
                 try {
@@ -358,6 +397,8 @@
                 method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(payload)
             });
 
+            if (response.status === 401) return fazerLogout("Sessão expirada. Faça login novamente.");
+
             if (response.ok) {
                 mostrarNotificacao('Produto salvo com sucesso!');
                 document.getElementById('form-produto').reset();
@@ -380,9 +421,11 @@
         };
 
         try {
-            const response = await fetch(`${API_BASE_URL}/api/Usuario`, {
+            const response = await fetch(`${API_BASE_URL}/api/Cliente`, {
                 method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(payload)
             });
+
+            if (response.status === 401) return fazerLogout("Sessão expirada. Faça login novamente.");
 
             if (response.ok) {
                 mostrarNotificacao('Cliente salvo com sucesso!');
@@ -396,25 +439,33 @@
         finally { setBotoesCarregando('btn-cliente', false); }
     }
 
-let paginaAtual = 0; // offset começa em 0
+    function filtrarClientes() {
+        clearTimeout(timeoutBuscaCliente);
+        timeoutBuscaCliente = setTimeout(() => {
+            paginaAtual = 0; 
+            carregarClientes();
+        }, 300);
+    }
 
     async function carregarClientes() {
         const tbody = document.getElementById('tbody-clientes');
         const labelPagina = document.getElementById('label-pagina');
+        const termoBusca = document.getElementById('buscar-cliente-nome').value.trim();
         
         try {
-            // Chamada com offset calculado (pagina 0 = offset 0, pagina 1 = offset 10...)
-            const res = await fetch(`${API_BASE_URL}/api/Usuario?offset=${paginaAtual * 10}`, { 
-                headers: getAuthHeaders() 
+            const cacheBuster = new Date().getTime();
+            const res = await fetch(`${API_BASE_URL}/api/Cliente?offset=${paginaAtual * 10}&nome=${encodeURIComponent(termoBusca)}&_t=${cacheBuster}`, { 
+                headers: getAuthHeaders(), cache: 'no-store'
             });
             
+            if (res.status === 401) return fazerLogout("Sessão expirada. Faça login novamente.");
             if (!res.ok) throw new Error();
             
             const clientes = await res.json();
             
             tbody.innerHTML = '';
             if (clientes.length === 0 && paginaAtual > 0) {
-                mudarPagina(-1); // Volta se estiver vazio
+                mudarPagina(-1); 
                 return;
             }
 
@@ -435,7 +486,6 @@ let paginaAtual = 0; // offset começa em 0
                 </tr>`;
             });
 
-            // Atualiza botões
             labelPagina.innerText = `Página ${paginaAtual + 1}`;
             document.getElementById('btn-prev').disabled = paginaAtual === 0;
             document.getElementById('btn-next').disabled = clientes.length < 10;
@@ -452,7 +502,13 @@ let paginaAtual = 0; // offset começa em 0
     // --- AUTOCOMPLETE ELASTICSEARCH ---
     async function buscarNoElasticsearch(termo) {
         try {
-            const res = await fetch(`${API_BASE_URL}/api/Produto/Autocomplete?termo=${termo}`, { headers: getAuthHeaders() });
+            const cacheBuster = new Date().getTime();
+            const res = await fetch(`${API_BASE_URL}/api/Produto/Autocomplete?termo=${termo}&_t=${cacheBuster}`, { 
+                headers: getAuthHeaders(), cache: 'no-store' 
+            });
+            
+            if (res.status === 401) return fazerLogout("Sessão expirada. Faça login novamente.");
+
             if (res.ok) {
                 const produtos = await res.json();
                 renderizarListaAutocomplete(produtos);
@@ -461,12 +517,12 @@ let paginaAtual = 0; // offset começa em 0
     }
 
     function renderizarListaAutocomplete(produtos) {
-        const listaResultados = document.getElementById('lista-autocomplete');
-        listaResultados.innerHTML = '';
+        const listResults = document.getElementById('lista-autocomplete');
+        listResults.innerHTML = '';
         
         if (produtos.length === 0) {
-            listaResultados.innerHTML = `<li class="list-group-item text-muted small border-0 py-3 text-center">Nenhum produto encontrado</li>`;
-            listaResultados.classList.remove('d-none');
+            listResults.innerHTML = `<li class="list-group-item text-muted small border-0 py-3 text-center">Nenhum produto encontrado</li>`;
+            listResults.classList.remove('d-none');
             return;
         }
 
@@ -478,12 +534,18 @@ let paginaAtual = 0; // offset começa em 0
             
             li.onclick = async () => {
                 const inputBusca = document.getElementById('comanda-produto-busca');
-                listaResultados.classList.add('d-none'); 
+                listResults.classList.add('d-none'); 
                 inputBusca.disabled = true;
                 inputBusca.value = 'Buscando detalhes do produto...'; 
 
                 try {
-                    const res = await fetch(`${API_BASE_URL}/api/Produto/ObterPorId/${p.id}`, { headers: getAuthHeaders() });
+                    const cacheBuster = new Date().getTime();
+                    const res = await fetch(`${API_BASE_URL}/api/Produto/ObterPorId/${p.id}?_t=${cacheBuster}`, { 
+                        headers: getAuthHeaders(), cache: 'no-store' 
+                    });
+                    
+                    if (res.status === 401) return fazerLogout("Sessão expirada. Faça login novamente.");
+
                     if (res.ok) {
                         produtoSelecionado = await res.json();
                         inputBusca.value = produtoSelecionado.nome; 
@@ -499,18 +561,24 @@ let paginaAtual = 0; // offset começa em 0
                 } finally { inputBusca.disabled = false; }
             };
 
-            listaResultados.appendChild(li);
+            listResults.appendChild(li);
         });
 
-        listaResultados.classList.remove('d-none');
+        listResults.classList.remove('d-none');
     }
 
     // --- COMANDAS ---
     async function carregarComandas() {
         const tbody = document.getElementById('tbody-comandas');
         try {
-            const res = await fetch(`${API_BASE_URL}/api/Comanda`, { headers: getAuthHeaders() });
+            // ADICIONADO TIMESTAMP PARA BURLAR CACHE DO NAVEGADOR
+            const cacheBuster = new Date().getTime();
+            const res = await fetch(`${API_BASE_URL}/api/Comanda/ObterTodasComandas?_t=${cacheBuster}`, { 
+                headers: getAuthHeaders(), cache: 'no-store' 
+            });
+            if (res.status === 401) return fazerLogout("Sessão expirada. Faça login novamente.");
             if (!res.ok) throw new Error();
+            
             const comandas = await res.json();
             
             tbody.innerHTML = '';
@@ -521,19 +589,140 @@ let paginaAtual = 0; // offset começa em 0
 
             comandas.forEach(c => {
                 const idFormatado = c.id ? c.id.substring(0,8) : 'N/A';
-                tbody.innerHTML += `<tr><td class="fw-bold">${idFormatado}</td><td>${new Date().toLocaleDateString()}</td><td><span class="badge bg-dark">Aberta</span></td><td class="text-end fw-bold">R$ 0,00</td><td class="text-center"><button class="btn btn-sm btn-outline-danger" onclick="deletarComanda('${c.id}')">Excluir</button></td></tr>`;
+                const identificacaoTexto = c.identificacao ? ` (${c.identificacao})` : '';
+                const valorFormatado = c.valorTotal != null ? c.valorTotal.toFixed(2).replace('.', ',') : '0,00';
+                
+                let statusLabel = 'Aberta';
+                let statusColor = 'btn-dark';
+                if (c.status == 2 || c.status === 'EmPreparo') { statusLabel = 'Em Preparo'; statusColor = 'btn-warning text-dark'; }
+                else if (c.status == 3 || c.status === 'Finalizada') { statusLabel = 'Finalizada'; statusColor = 'btn-success text-white'; }
+
+                const statusDropdown = `
+                <div class="dropdown">
+                    <button class="btn btn-sm ${statusColor} dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        ${statusLabel}
+                    </button>
+                    <ul class="dropdown-menu shadow-sm">
+                        <li><a class="dropdown-item" href="#" onclick="atualizarStatusComanda('${c.id}', 1); return false;">Aberta</a></li>
+                        <li><a class="dropdown-item" href="#" onclick="atualizarStatusComanda('${c.id}', 2); return false;">Em Preparo</a></li>
+                        <li><a class="dropdown-item" href="#" onclick="atualizarStatusComanda('${c.id}', 3); return false;">Finalizada</a></li>
+                    </ul>
+                </div>`;
+
+                tbody.innerHTML += `
+                <tr>
+                    <td class="fw-bold">${idFormatado}${identificacaoTexto}</td>
+                    <td>${new Date().toLocaleDateString()}</td>
+                    <td>${statusDropdown}</td>
+                    <td class="text-end fw-bold">R$ ${valorFormatado}</td>
+                    <td class="text-center">
+                        <button class="btn btn-sm btn-outline-primary me-1" onclick="editarComanda('${c.id}')" title="Editar">✏️</button>
+                        <button class="btn btn-sm btn-outline-danger" onclick="deletarComanda('${c.id}')">Excluir</button>
+                    </td>
+                </tr>`;
             });
         } catch (e) { tbody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-danger">Erro ao carregar comandas.</td></tr>`; }
     }
 
-    function abrirModalComanda() {
+    async function atualizarStatusComanda(id, novoStatus) {
+        try {
+            const res = await fetch(`${API_BASE_URL}/api/Comanda/AtualizarStatusComanda/${id}?status=${novoStatus}`, { 
+                method: 'PUT', 
+                headers: getAuthHeaders() 
+            });
+
+            if (res.status === 401) return fazerLogout("Sessão expirada. Faça login novamente.");
+            
+            if (res.ok || res.status === 200) { 
+                mostrarNotificacao('Status atualizado com sucesso!'); 
+                await carregarComandas(); 
+            } else { 
+                mostrarNotificacao('Erro ao atualizar status.', 'error'); 
+            }
+        } catch (e) { 
+            mostrarNotificacao('Erro de conexão ao atualizar status.', 'error'); 
+        }
+    }
+
+    async function abrirModalComanda() {
+        comandaIdEdicao = null;
+        comandaStatusEdicao = 1;
+        itensComandaOriginais = [];
         itensComandaTemporaria = [];
         produtoSelecionado = null;
+        
+        document.getElementById('tituloModalComanda').innerText = 'Abertura de Comanda';
         document.getElementById('comanda-identificacao').value = '';
         document.getElementById('comanda-produto-busca').value = '';
         document.getElementById('lista-autocomplete').classList.add('d-none');
+        
+        await carregarClientesParaComanda();
+        document.getElementById('comanda-cliente-id').value = '';
+        
         renderizarTabelaItens();
         modalComandaInstance.show();
+    }
+
+    async function editarComanda(id) {
+        try {
+            const cacheBuster = new Date().getTime();
+            const res = await fetch(`${API_BASE_URL}/api/Comanda/ObterComandaPorId/${id}?_t=${cacheBuster}`, { 
+                headers: getAuthHeaders(), cache: 'no-store' 
+            });
+            if (res.status === 401) return fazerLogout("Sessão expirada. Faça login novamente.");
+            if (!res.ok) throw new Error();
+
+            const comanda = await res.json();
+            
+            comandaIdEdicao = comanda.id;
+            comandaStatusEdicao = mapearStatusParaInt(comanda.status);
+            
+            document.getElementById('tituloModalComanda').innerText = `Editar Comanda (ID: ${comanda.id.substring(0,8)})`;
+            document.getElementById('comanda-identificacao').value = comanda.identificacao || '';
+            document.getElementById('comanda-produto-busca').value = '';
+            
+            await carregarClientesParaComanda();
+            document.getElementById('comanda-cliente-id').value = comanda.clienteId || '';
+
+            // Mapeamento flexível para aceitar "itens", "produtos", e tratar falta de quantidade.
+            itensComandaTemporaria = (comanda.itens || comanda.produtos || []).map(i => ({
+                produtoId: i.produtoId || i.id,
+                nomeProduto: i.nomeProduto || i.nome || i.produto?.nome || 'Produto',
+                preco: i.preco || i.produto?.preco || 0,
+                quantidade: i.quantidade || 1 // O backend agora deve enviar, senão fallback 1
+            }));
+
+            // Copia exata para o Diffing no salvamento
+            itensComandaOriginais = JSON.parse(JSON.stringify(itensComandaTemporaria));
+
+            renderizarTabelaItens();
+            modalComandaInstance.show();
+        } catch (e) {
+            mostrarNotificacao('Erro ao carregar dados da comanda.', 'error');
+        }
+    }
+
+    function mapearStatusParaInt(status) {
+        if (status === 'EmPreparo' || status === 'Em Preparo' || status === 2) return 2;
+        if (status === 'Finalizada' || status === 3) return 3;
+        return 1; 
+    }
+
+    async function carregarClientesParaComanda() {
+        const select = document.getElementById('comanda-cliente-id');
+        select.innerHTML = '<option value="">Selecione um Cliente (Opcional)</option>';
+        try {
+            const cacheBuster = new Date().getTime();
+            const res = await fetch(`${API_BASE_URL}/api/Cliente?offset=0&nome=&_t=${cacheBuster}`, { 
+                headers: getAuthHeaders(), cache: 'no-store' 
+            });
+            if (res.ok) {
+                const clientes = await res.json();
+                clientes.forEach(c => {
+                    select.innerHTML += `<option value="${c.id}">${c.nome}</option>`;
+                });
+            }
+        } catch (e) { console.error("Erro ao popular clientes no modal de comandas", e); }
     }
 
     function adicionarItemNaComanda() {
@@ -543,7 +732,19 @@ let paginaAtual = 0; // offset começa em 0
         if (!produtoSelecionado) return mostrarNotificacao('Pesquise e selecione um produto na lista!', 'error');
         
         const quantidade = parseInt(qtdInput.value) || 1;
-        itensComandaTemporaria.push({ produtoId: produtoSelecionado.id, nomeProduto: produtoSelecionado.nome, quantidade: quantidade });
+        
+        const indexExistente = itensComandaTemporaria.findIndex(i => i.produtoId === produtoSelecionado.id);
+        
+        if (indexExistente >= 0) {
+            itensComandaTemporaria[indexExistente].quantidade += quantidade;
+        } else {
+            itensComandaTemporaria.push({ 
+                produtoId: produtoSelecionado.id, 
+                nomeProduto: produtoSelecionado.nome, 
+                preco: produtoSelecionado.preco, 
+                quantidade: quantidade 
+            });
+        }
         
         produtoSelecionado = null;
         buscaInput.value = '';
@@ -553,41 +754,131 @@ let paginaAtual = 0; // offset começa em 0
 
     function renderizarTabelaItens() {
         const tbody = document.getElementById('tbody-itens-comanda');
+        const totalEl = document.getElementById('comanda-total');
         tbody.innerHTML = '';
         
         if (itensComandaTemporaria.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="3" class="text-center text-muted small py-3">Nenhum item adicionado</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted small py-3">Nenhum item adicionado</td></tr>`;
+            if (totalEl) totalEl.innerText = 'R$ 0,00';
             return;
         }
 
+        let totalGeral = 0;
+
         itensComandaTemporaria.forEach((item, index) => {
-            tbody.innerHTML += `<tr><td>${item.nomeProduto}</td><td>${item.quantidade}x</td><td class="text-end"><button class="btn btn-sm text-danger border-0 p-0" onclick="removerItemComanda(${index})">Remover</button></td></tr>`;
+            const subtotal = item.quantidade * item.preco;
+            totalGeral += subtotal;
+
+            tbody.innerHTML += `
+            <tr>
+                <td>${item.nomeProduto}</td>
+                <td>R$ ${item.preco.toFixed(2).replace('.', ',')}</td>
+                <td>${item.quantidade}x</td>
+                <td class="text-end fw-medium">R$ ${subtotal.toFixed(2).replace('.', ',')}</td>
+                <td class="text-center">
+                    <button class="btn btn-sm text-danger border-0 p-0" onclick="removerItemComanda(${index})">Remover</button>
+                </td>
+            </tr>`;
         });
+
+        if (totalEl) totalEl.innerText = `R$ ${totalGeral.toFixed(2).replace('.', ',')}`;
     }
 
     function removerItemComanda(index) {
+        // Ao clicar aqui, o item sai da memória temporária na mesma hora.
+        // O Diff (na hora de salvar) vai perceber a ausência e mandar o C# apagar.
         itensComandaTemporaria.splice(index, 1);
         renderizarTabelaItens();
     }
 
     async function salvarComanda() {
         const identificacao = document.getElementById('comanda-identificacao').value;
-        if (!identificacao) return mostrarNotificacao('Informe a identificação (Mesa/Cliente).', 'error');
+        const clienteIdValue = document.getElementById('comanda-cliente-id').value;
 
-        const payload = { Identificacao: identificacao, Itens: itensComandaTemporaria.map(i => ({ ProdutoId: i.produtoId, Quantidade: i.quantidade })) };
+        if (!comandaIdEdicao && !identificacao) return mostrarNotificacao('Informe a identificação (Mesa/Cliente).', 'error');
 
         try {
-            const res = await fetch(`${API_BASE_URL}/api/Comanda`, { method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(payload) });
-            if (res.ok) { mostrarNotificacao('Comanda criada!'); modalComandaInstance.hide(); carregarComandas(); } 
-            else { mostrarNotificacao('Erro ao criar comanda.', 'error'); }
+            if (comandaIdEdicao) {
+                // DIFERENCIAL (DIFFING): Compara a lista inicial (Banco) com a Final (Modal)
+                const produtosParaAdicionar = [];
+                const produtosParaRemover = [];
+
+                // Verifica quem precisa SAIR
+                itensComandaOriginais.forEach(orig => {
+                    const itemAtual = itensComandaTemporaria.find(t => t.produtoId === orig.produtoId);
+                    // Se o item foi removido ou teve quantidade diminuída
+                    if (!itemAtual) {
+                        produtosParaRemover.push({ ProdutoId: orig.produtoId, Quantidade: orig.quantidade });
+                    } else if (itemAtual.quantidade < orig.quantidade) {
+                        produtosParaRemover.push({ ProdutoId: orig.produtoId, Quantidade: orig.quantidade - itemAtual.quantidade });
+                    }
+                });
+
+                // Verifica quem precisa ENTRAR
+                itensComandaTemporaria.forEach(temp => {
+                    const itemOriginal = itensComandaOriginais.find(o => o.produtoId === temp.produtoId);
+                    // Se o item é novo ou teve quantidade aumentada
+                    if (!itemOriginal) {
+                        produtosParaAdicionar.push({ ProdutoId: temp.produtoId, Quantidade: temp.quantidade });
+                    } else if (temp.quantidade > itemOriginal.quantidade) {
+                        produtosParaAdicionar.push({ ProdutoId: temp.produtoId, Quantidade: temp.quantidade - itemOriginal.quantidade });
+                    }
+                });
+
+                const payloadUpdate = {
+                    ClienteId: clienteIdValue ? clienteIdValue : null,
+                    Status: comandaStatusEdicao,
+                    ProdutosParaRemover: produtosParaRemover,
+                    ProdutosParaAdicionar: produtosParaAdicionar
+                };
+
+                const res = await fetch(`${API_BASE_URL}/api/Comanda/AtualizarComanda/${comandaIdEdicao}`, { 
+                    method: 'PUT', headers: getAuthHeaders(), body: JSON.stringify(payloadUpdate) 
+                });
+                
+                if (res.status === 401) return fazerLogout("Sessão expirada. Faça login novamente.");
+                
+                if (res.ok || res.status === 200) { 
+                    mostrarNotificacao('Comanda atualizada com sucesso!'); 
+                    modalComandaInstance.hide(); 
+                    await carregarComandas(); 
+                } else { 
+                    mostrarNotificacao('Erro ao atualizar comanda.', 'error'); 
+                }
+
+            } else {
+                const payloadCreate = { 
+                    Identificacao: identificacao, 
+                    ClienteId: clienteIdValue ? clienteIdValue : null,
+                    Itens: itensComandaTemporaria.map(i => ({ ProdutoId: i.produtoId, Quantidade: i.quantidade })) 
+                };
+
+                const res = await fetch(`${API_BASE_URL}/api/Comanda/CriarComanda`, { 
+                    method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(payloadCreate) 
+                });
+                
+                if (res.status === 401) return fazerLogout("Sessão expirada. Faça login novamente.");
+                if (res.ok || res.status === 200) { 
+                    mostrarNotificacao('Comanda criada!'); 
+                    modalComandaInstance.hide(); 
+                    await carregarComandas(); 
+                } else { 
+                    mostrarNotificacao('Erro ao criar comanda.', 'error'); 
+                }
+            }
         } catch (e) { mostrarNotificacao('Erro de conexão.', 'error'); } 
     }
 
     async function deletarComanda(id) {
-        if (!confirm('Deseja excluir?')) return;
+        if (!confirm('Deseja excluir permanentemente esta comanda?')) return;
         try {
-            const res = await fetch(`${API_BASE_URL}/api/Comanda/${id}`, { method: 'DELETE', headers: getAuthHeaders() });
-            if (res.ok) { mostrarNotificacao('Comanda excluída!'); carregarComandas(); } 
+            const res = await fetch(`${API_BASE_URL}/api/Comanda/DeletarComanda/${id}`, { method: 'DELETE', headers: getAuthHeaders() });
+            if (res.status === 401) return fazerLogout("Sessão expirada. Faça login novamente.");
+            
+            if (res.ok || res.status === 200) { 
+                mostrarNotificacao('Comanda excluída!'); 
+                await carregarComandas(); 
+            } 
         } catch (e) { mostrarNotificacao('Erro.', 'error'); }
     }
 </script>
